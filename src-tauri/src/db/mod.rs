@@ -16,6 +16,7 @@ pub fn open_at(path: &Path) -> rusqlite::Result<Connection> {
 pub mod jobs;
 pub mod applications;
 pub mod pending;
+pub mod profile;
 
 #[cfg(test)]
 pub fn open_in_memory() -> Connection {
