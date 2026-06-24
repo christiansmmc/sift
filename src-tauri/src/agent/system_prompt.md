@@ -10,9 +10,7 @@ skills or brainstorm; they do not apply to this run. Just do the task below and 
 results using the markers described later.
 
 # Your task this run
-Search LinkedIn for jobs matching the candidate's criteria, evaluate fit, and for the
-good matches generate a tailored cover letter and answers to the application's screening
-questions. Do NOT submit anything — the user reviews everything first. Process at most {{BATCH_SIZE}} jobs, then stop.
+{{MODE_INSTRUCTIONS}}
 
 # Candidate profile
 {{PROFILE}}

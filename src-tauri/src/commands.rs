@@ -98,6 +98,7 @@ pub async fn analyze_cv(cv_text: String) -> CmdResult<crate::cv_analysis::CvAnal
 pub fn start_search_batch(
     state: State<AppState>,
     app: tauri::AppHandle,
+    mode: Option<String>,
     batch_size: Option<u32>,
 ) -> CmdResult<()> {
     {
@@ -114,10 +115,15 @@ pub fn start_search_batch(
         let conn = state.db.lock().map_err(err)?;
         profile::get(&conn).map_err(err)?
     };
+    let mode = match mode.as_deref() {
+        Some("scan") | Some("revisar") => mode.unwrap(),
+        _ => "revisar".to_string(),
+    };
     let handle = crate::agent::runner::start(
         Arc::clone(&state.db),
         app,
         profile,
+        mode,
         batch_size.unwrap_or(10),
     )?;
     // Stop and drop any finished-but-lingering handle before replacing it.
