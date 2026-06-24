@@ -7,6 +7,18 @@ export interface Criteria {
   red_lines: string[];
 }
 
+export interface PersonalData {
+  full_name: string;
+  email: string;
+  phone: string;
+  location: string;
+}
+
+export interface CvAnalysis {
+  personal: PersonalData;
+  criteria: Criteria;
+}
+
 export interface Profile {
   full_name: string;
   email: string;

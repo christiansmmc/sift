@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import type {
-  Profile, Job, Application, PendingAction, DashboardCounts, Criteria,
+  Profile, Job, Application, PendingAction, DashboardCounts, CvAnalysis,
 } from "../types";
 
 export const api = {
@@ -18,7 +18,7 @@ export const api = {
   // extras, so this works whether it expects camelCase (cvText) or snake_case
   // (cv_text). Avoids a silent runtime arg-mismatch on this multi-word param.
   analyzeCv: (cvText: string) =>
-    invoke<Criteria>("analyze_cv", { cvText, cv_text: cvText }),
+    invoke<CvAnalysis>("analyze_cv", { cvText, cv_text: cvText }),
   saveLinkedinCredentials: (username: string, password: string) =>
     invoke<void>("save_linkedin_credentials", { username, password }),
   hasLinkedinCredentials: () => invoke<boolean>("has_linkedin_credentials"),

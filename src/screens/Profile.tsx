@@ -35,9 +35,18 @@ export default function Profile() {
     if (!profile!.cv_text.trim()) return;
     setBusy(true); setStatus(null);
     try {
-      const c = await api.analyzeCv(profile!.cv_text);
-      if (c.role || c.seniority || c.work_model) {
-        setCriteria({ ...criteria, ...c });
+      const a = await api.analyzeCv(profile!.cv_text);
+      const gotCriteria = a.criteria.role || a.criteria.seniority || a.criteria.work_model;
+      if (gotCriteria) {
+        setCriteria({ ...criteria, ...a.criteria });
+        // fill only personal fields that are currently empty, never overwrite
+        setProfile((prev) => prev && {
+          ...prev,
+          full_name: prev.full_name || a.personal.full_name,
+          email: prev.email || a.personal.email,
+          phone: prev.phone || a.personal.phone,
+          location: prev.location || a.personal.location,
+        });
         setStatus("Critérios atualizados pela análise. Revise e salve.");
       } else {
         setStatus("Não consegui inferir critérios — ajuste manualmente.");

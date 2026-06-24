@@ -20,7 +20,7 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const steps = ["Seus dados", "Currículo", "O que você busca", "Login LinkedIn"];
+  const steps = ["Currículo", "Seus dados", "O que você busca", "Login LinkedIn"];
 
   async function finish() {
     setSaving(true);
@@ -58,8 +58,8 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
         </ol>
       </header>
       <main className="onb-body">
-        {step === 0 && <StepPersonal value={personal} onChange={setPersonal} />}
-        {step === 1 && <StepCv cvText={cvText} setCvText={setCvText} criteria={criteria} setCriteria={setCriteria} />}
+        {step === 0 && <StepCv cvText={cvText} setCvText={setCvText} personal={personal} setPersonal={setPersonal} criteria={criteria} setCriteria={setCriteria} />}
+        {step === 1 && <StepPersonal value={personal} onChange={setPersonal} />}
         {step === 2 && <StepCriteria value={criteria} onChange={setCriteria} />}
         {step === 3 && <StepLinkedin value={linkedin} onChange={setLinkedin} />}
       </main>
