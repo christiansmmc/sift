@@ -28,6 +28,9 @@ pub fn run() {
             commands::dashboard_counts,
             commands::parse_resume,
             commands::analyze_cv,
+            commands::start_search_batch,
+            commands::stop_agent,
+            commands::agent_running,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

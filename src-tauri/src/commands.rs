@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use serde::Serialize;
 use tauri::State;
 
@@ -90,4 +92,53 @@ pub async fn analyze_cv(cv_text: String) -> CmdResult<crate::cv_analysis::CvAnal
     tauri::async_runtime::spawn_blocking(move || crate::cv_analysis::analyze(&cv_text))
         .await
         .map_err(err)
+}
+
+#[tauri::command]
+pub fn start_search_batch(
+    state: State<AppState>,
+    app: tauri::AppHandle,
+    batch_size: Option<u32>,
+) -> CmdResult<()> {
+    {
+        let conn = state.db.lock().map_err(err)?;
+        if !profile::is_onboarding_complete(&conn).map_err(err)? {
+            return Err("Complete a configuração antes de iniciar a busca.".into());
+        }
+    }
+    let mut slot = state.agent.lock().map_err(err)?;
+    if slot.as_ref().map(|h| h.is_running()).unwrap_or(false) {
+        return Err("O agente já está em execução.".into());
+    }
+    let profile = {
+        let conn = state.db.lock().map_err(err)?;
+        profile::get(&conn).map_err(err)?
+    };
+    let handle = crate::agent::runner::start(
+        Arc::clone(&state.db),
+        app,
+        profile,
+        batch_size.unwrap_or(10),
+    )?;
+    *slot = Some(handle);
+    Ok(())
+}
+
+#[tauri::command]
+pub fn stop_agent(state: State<AppState>) -> CmdResult<()> {
+    if let Some(h) = state.agent.lock().map_err(err)?.as_ref() {
+        h.stop();
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn agent_running(state: State<AppState>) -> CmdResult<bool> {
+    Ok(state
+        .agent
+        .lock()
+        .map_err(err)?
+        .as_ref()
+        .map(|h| h.is_running())
+        .unwrap_or(false))
 }
