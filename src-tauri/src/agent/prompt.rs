@@ -32,6 +32,7 @@ mod tests {
             location: "Brazil".into(),
             cv_text: "8 years backend".into(),
             criteria_json: r#"{"role":"backend"}"#.into(),
+            screening_json: "{}".into(),
         };
         let out = build_system_prompt(&p, 10);
         assert!(out.contains("at most 10 jobs"));

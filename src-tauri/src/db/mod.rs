@@ -19,6 +19,8 @@ fn migrate(conn: &Connection) -> rusqlite::Result<()> {
     for stmt in [
         "ALTER TABLE applications ADD COLUMN cover_letter TEXT",
         "ALTER TABLE applications ADD COLUMN answers_json TEXT",
+        "ALTER TABLE profile ADD COLUMN screening_json TEXT NOT NULL DEFAULT '{}'",
+        "ALTER TABLE pending_actions ADD COLUMN questions_json TEXT NOT NULL DEFAULT '[]'",
     ] {
         match conn.execute(stmt, []) {
             Ok(_) => {}
@@ -26,6 +28,15 @@ fn migrate(conn: &Connection) -> rusqlite::Result<()> {
             Err(e) => return Err(e),
         }
     }
+    // Create answers table if it doesn't exist yet (CREATE IF NOT EXISTS is idempotent).
+    conn.execute_batch(
+        "CREATE TABLE IF NOT EXISTS answers (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            question     TEXT NOT NULL UNIQUE,
+            answer       TEXT NOT NULL,
+            updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
+        )",
+    )?;
     Ok(())
 }
 
@@ -41,6 +52,7 @@ pub mod jobs;
 pub mod applications;
 pub mod pending;
 pub mod profile;
+pub mod answers;
 
 #[cfg(test)]
 pub fn open_in_memory() -> Connection {
@@ -61,12 +73,12 @@ mod tests {
         let count: i64 = conn
             .query_row(
                 "SELECT COUNT(*) FROM sqlite_master WHERE type='table' \
-                 AND name IN ('jobs','applications','pending_actions','profile','sessions')",
+                 AND name IN ('jobs','applications','pending_actions','profile','sessions','answers')",
                 [],
                 |r| r.get(0),
             )
             .unwrap();
-        assert_eq!(count, 5);
+        assert_eq!(count, 6);
     }
 
     #[test]
@@ -87,6 +99,18 @@ mod tests {
         };
         assert!(cols.contains(&"cover_letter".to_string()));
         assert!(cols.contains(&"answers_json".to_string()));
+        // profile gets screening_json
+        let profile_cols: Vec<String> = {
+            let mut stmt = conn.prepare("PRAGMA table_info(profile)").unwrap();
+            let rows = stmt.query_map([], |r| r.get::<_, String>(1)).unwrap();
+            rows.map(|r| r.unwrap()).collect()
+        };
+        assert!(profile_cols.contains(&"screening_json".to_string()));
+        // answers table exists
+        let answers_count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM answers", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(answers_count, 0);
     }
 
     #[test]
