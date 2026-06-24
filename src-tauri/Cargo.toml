@@ -27,6 +27,6 @@ chrono = { version = "0.4", features = ["serde"] }
 pdf-extract = "0.7"
 zip = "2"
 quick-xml = "0.36"
-keyring = "3"
+keyring = { version = "3", features = ["windows-native"] }
 tauri-plugin-dialog = "2"
 

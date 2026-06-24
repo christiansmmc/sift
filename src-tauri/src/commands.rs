@@ -21,8 +21,8 @@ pub struct DashboardCounts {
 #[tauri::command]
 pub fn get_onboarding_status(state: State<AppState>) -> CmdResult<bool> {
     let conn = state.db.lock().map_err(err)?;
-    // Keychain wired in Plan 3; treat credentials as absent for now.
-    profile::is_onboarding_complete(&conn, false).map_err(err)
+    let has_creds = crate::credentials::has_linkedin();
+    profile::is_onboarding_complete(&conn, has_creds).map_err(err)
 }
 
 #[tauri::command]
@@ -78,4 +78,19 @@ pub fn dashboard_counts(state: State<AppState>) -> CmdResult<DashboardCounts> {
 #[tauri::command]
 pub fn parse_resume(path: String) -> CmdResult<String> {
     crate::resume::extract_from_path(&path)
+}
+
+#[tauri::command]
+pub fn save_linkedin_credentials(username: String, password: String) -> CmdResult<()> {
+    crate::credentials::save_linkedin(&username, &password)
+}
+
+#[tauri::command]
+pub fn has_linkedin_credentials() -> CmdResult<bool> {
+    Ok(crate::credentials::has_linkedin())
+}
+
+#[tauri::command]
+pub fn get_linkedin_username() -> CmdResult<Option<String>> {
+    Ok(crate::credentials::current_username())
 }
