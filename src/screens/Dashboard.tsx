@@ -6,6 +6,7 @@ export default function Dashboard() {
   const [counts, setCounts] = useState<DashboardCounts | null>(null);
   const [running, setRunning] = useState(false);
   const [batch, setBatch] = useState(10);
+  const [mode, setMode] = useState<"scan" | "revisar">("revisar");
   const [error, setError] = useState<string | null>(null);
 
   async function refresh() {
@@ -21,7 +22,7 @@ export default function Dashboard() {
 
   async function start() {
     setError(null);
-    try { await api.startSearchBatch(batch); setRunning(true); }
+    try { await api.startSearchBatch(mode, batch); setRunning(true); }
     catch (e) { setError(String(e)); }
   }
   async function stop() {
@@ -33,6 +34,12 @@ export default function Dashboard() {
     <section>
       <h1>Painel</h1>
       <div style={{ display: "flex", gap: 12, alignItems: "center", margin: "16px 0" }}>
+        <label>Modo
+          <select value={mode} onChange={(e) => setMode(e.target.value as "scan" | "revisar")} disabled={running} style={{ marginLeft: 8 }}>
+            <option value="revisar">Revisar (preparar p/ aprovar)</option>
+            <option value="scan">Scan (só descobrir)</option>
+          </select>
+        </label>
         <label>Vagas por busca
           <input type="number" min={1} max={50} value={batch}
             onChange={(e) => setBatch(Number(e.target.value))}
