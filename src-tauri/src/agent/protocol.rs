@@ -1,14 +1,14 @@
 //! Stdout marker protocol the agent uses to report results to the app.
 //! The agent prints one marker per line; everything else is ignored chatter.
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 pub const JOB: &str = "APPLYBOT_JOB";
 pub const PENDING: &str = "APPLYBOT_PENDING";
 pub const LOGIN_REQUIRED: &str = "APPLYBOT_LOGIN_REQUIRED";
 pub const DONE: &str = "APPLYBOT_DONE";
 
-#[derive(Debug, Clone, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct Answer {
     pub question: String,
     pub answer: String,
