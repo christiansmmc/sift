@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { open } from "@tauri-apps/plugin-dialog";
 import type {
-  Profile, Job, Application, PendingAction, DashboardCounts, CvAnalysis,
+  Profile, Job, Application, PendingAction, DashboardCounts, CvAnalysis, ReviewItem,
 } from "../types";
 
 export const api = {
@@ -23,8 +23,12 @@ export const api = {
   // (cv_text). Avoids a silent runtime arg-mismatch on this multi-word param.
   analyzeCv: (cvText: string) =>
     invoke<CvAnalysis>("analyze_cv", { cvText, cv_text: cvText }),
-  startSearchBatch: (batchSize: number) =>
-    invoke<void>("start_search_batch", { batchSize }),
+  startSearchBatch: (mode: string, batchSize: number) =>
+    invoke<void>("start_search_batch", { mode, batchSize }),
+  listReviewQueue: () => invoke<ReviewItem[]>("list_review_queue"),
+  listFoundJobs: () => invoke<Job[]>("list_found_jobs"),
+  approveApplication: (id: number) => invoke<void>("approve_application", { id }),
+  rejectApplication: (id: number) => invoke<void>("reject_application", { id }),
   stopAgent: () => invoke<void>("stop_agent"),
   agentRunning: () => invoke<boolean>("agent_running"),
 };

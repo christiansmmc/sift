@@ -129,13 +129,14 @@ pub fn start(
     db: Arc<Mutex<Connection>>,
     app: tauri::AppHandle,
     profile: crate::db::profile::Profile,
+    mode: String,
     batch_size: u32,
 ) -> Result<AgentHandle, String> {
     let answers = {
         let conn = db.lock().map_err(|e| e.to_string())?;
         crate::db::answers::list(&conn).map_err(|e| e.to_string())?
     };
-    let prompt = crate::agent::prompt::build_system_prompt(&profile, &answers, batch_size);
+    let prompt = crate::agent::prompt::build_system_prompt(&profile, &answers, &mode, batch_size);
 
     let mut cmd = Command::new("claude");
     cmd.arg("-p").arg(&prompt);

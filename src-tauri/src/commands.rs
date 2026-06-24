@@ -98,6 +98,7 @@ pub async fn analyze_cv(cv_text: String) -> CmdResult<crate::cv_analysis::CvAnal
 pub fn start_search_batch(
     state: State<AppState>,
     app: tauri::AppHandle,
+    mode: Option<String>,
     batch_size: Option<u32>,
 ) -> CmdResult<()> {
     {
@@ -114,10 +115,15 @@ pub fn start_search_batch(
         let conn = state.db.lock().map_err(err)?;
         profile::get(&conn).map_err(err)?
     };
+    let mode = match mode.as_deref() {
+        Some("scan") | Some("revisar") => mode.unwrap(),
+        _ => "revisar".to_string(),
+    };
     let handle = crate::agent::runner::start(
         Arc::clone(&state.db),
         app,
         profile,
+        mode,
         batch_size.unwrap_or(10),
     )?;
     // Stop and drop any finished-but-lingering handle before replacing it.
@@ -167,4 +173,28 @@ pub fn list_answers(state: State<AppState>) -> CmdResult<Vec<AnswerPair>> {
 pub fn save_answer(state: State<AppState>, question: String, answer: String) -> CmdResult<()> {
     let conn = state.db.lock().map_err(err)?;
     answers::upsert(&conn, &question, &answer).map_err(err)
+}
+
+#[tauri::command]
+pub fn list_review_queue(state: State<AppState>) -> CmdResult<Vec<applications::ReviewItem>> {
+    let conn = state.db.lock().map_err(err)?;
+    applications::review_queue(&conn).map_err(err)
+}
+
+#[tauri::command]
+pub fn list_found_jobs(state: State<AppState>) -> CmdResult<Vec<jobs::Job>> {
+    let conn = state.db.lock().map_err(err)?;
+    jobs::without_application(&conn).map_err(err)
+}
+
+#[tauri::command]
+pub fn approve_application(state: State<AppState>, id: i64) -> CmdResult<()> {
+    let conn = state.db.lock().map_err(err)?;
+    applications::set_status(&conn, id, "approved").map_err(err)
+}
+
+#[tauri::command]
+pub fn reject_application(state: State<AppState>, id: i64) -> CmdResult<()> {
+    let conn = state.db.lock().map_err(err)?;
+    applications::set_status(&conn, id, "discarded").map_err(err)
 }

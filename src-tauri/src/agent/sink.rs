@@ -24,9 +24,12 @@ pub fn apply_event(conn: &Connection, event: &AgentEvent) -> rusqlite::Result<Ev
                 },
             )?;
             jobs::set_status(conn, job_id, "analyzed", Some(&j.match_summary))?;
-            if !applications::has_open_application(conn, job_id)? {
-                let answers_json = serde_json::to_string(&j.answers)
-                    .unwrap_or_else(|_| "[]".into());
+            // Scan mode reports jobs with no cover letter → save the job only.
+            // Revisar mode includes a cover letter → also queue an application.
+            if !j.cover_letter.trim().is_empty()
+                && !applications::has_open_application(conn, job_id)?
+            {
+                let answers_json = serde_json::to_string(&j.answers).unwrap_or_else(|_| "[]".into());
                 applications::create_with_content(conn, job_id, &j.cover_letter, &answers_json)?;
             }
             Ok(EventOutcome::Queued)
@@ -60,7 +63,7 @@ pub fn apply_event(conn: &Connection, event: &AgentEvent) -> rusqlite::Result<Ev
 mod tests {
     use super::*;
     use super::super::protocol::{Answer, JobReport, PendingReport};
-    use crate::db::open_in_memory;
+    use crate::db::{jobs, open_in_memory};
 
     #[test]
     fn job_event_queues_application_with_content() {
@@ -102,6 +105,20 @@ mod tests {
         apply_event(&conn, &ev).unwrap();
         apply_event(&conn, &ev).unwrap(); // same job reported again
         assert_eq!(applications::list(&conn).unwrap().len(), 1);
+    }
+
+    #[test]
+    fn scan_job_without_cover_letter_saves_job_only() {
+        let conn = open_in_memory();
+        let ev = AgentEvent::Job(JobReport {
+            title: "Dev".into(), company: "Acme".into(),
+            url: "https://linkedin.com/jobs/9".into(),
+            match_summary: "strong".into(),
+            cover_letter: "".into(), answers: vec![],
+        });
+        apply_event(&conn, &ev).unwrap();
+        assert_eq!(jobs::list(&conn).unwrap().len(), 1);
+        assert_eq!(applications::list(&conn).unwrap().len(), 0);
     }
 
     #[test]
