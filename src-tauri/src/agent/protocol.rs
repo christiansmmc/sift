@@ -33,6 +33,8 @@ pub struct PendingReport {
     pub description: String,
     #[serde(default)]
     pub url: Option<String>,
+    #[serde(default)]
+    pub questions: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -87,6 +89,15 @@ mod tests {
             AgentEvent::Pending(pr) => {
                 assert_eq!(pr.category, "external_application");
                 assert_eq!(pr.url.as_deref(), Some("https://acme.com/apply"));
+                assert!(pr.questions.is_empty());
+            }
+            _ => panic!("expected Pending"),
+        }
+        // questions field is deserialized when present
+        let pq = parse_line(r#"APPLYBOT_PENDING {"category":"missing_answer","description":"English level?","questions":["English level?","Visa?"]}"#).unwrap();
+        match pq {
+            AgentEvent::Pending(pr) => {
+                assert_eq!(pr.questions, vec!["English level?", "Visa?"]);
             }
             _ => panic!("expected Pending"),
         }

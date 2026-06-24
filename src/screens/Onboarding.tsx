@@ -28,6 +28,7 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
         ...personal,
         cv_text: cvText,
         criteria_json: JSON.stringify(criteria),
+        screening_json: "{}",
       };
       await api.saveProfile(profile);
       onDone();

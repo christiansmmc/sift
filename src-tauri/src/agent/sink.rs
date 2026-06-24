@@ -36,7 +36,11 @@ pub fn apply_event(conn: &Connection, event: &AgentEvent) -> rusqlite::Result<Ev
                 Some(u) => format!("{} ({})", p.description, u),
                 None => p.description.clone(),
             };
-            pending::create(conn, None, &p.category, &desc)?;
+            if p.questions.is_empty() {
+                pending::create(conn, None, &p.category, &desc)?;
+            } else {
+                pending::create_with_questions(conn, None, &p.category, &desc, &p.questions)?;
+            }
             Ok(EventOutcome::Pending)
         }
         AgentEvent::LoginRequired => {
@@ -107,9 +111,25 @@ mod tests {
             category: "external_application".into(),
             description: "redirects to site".into(),
             url: Some("https://acme.com/apply".into()),
+            questions: vec![],
         });
         apply_event(&conn, &ev).unwrap();
         let p = pending::list_open(&conn).unwrap();
         assert!(p[0].description.contains("acme.com"));
+        assert!(p[0].questions.is_empty());
+    }
+
+    #[test]
+    fn pending_event_with_questions_stores_them() {
+        let conn = open_in_memory();
+        let ev = AgentEvent::Pending(PendingReport {
+            category: "missing_answer".into(),
+            description: "English level?".into(),
+            url: None,
+            questions: vec!["English level?".into(), "Visa status?".into()],
+        });
+        apply_event(&conn, &ev).unwrap();
+        let p = pending::list_open(&conn).unwrap();
+        assert_eq!(p[0].questions, vec!["English level?", "Visa status?"]);
     }
 }

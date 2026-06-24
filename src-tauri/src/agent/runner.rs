@@ -131,7 +131,11 @@ pub fn start(
     profile: crate::db::profile::Profile,
     batch_size: u32,
 ) -> Result<AgentHandle, String> {
-    let prompt = crate::agent::prompt::build_system_prompt(&profile, batch_size);
+    let answers = {
+        let conn = db.lock().map_err(|e| e.to_string())?;
+        crate::db::answers::list(&conn).map_err(|e| e.to_string())?
+    };
+    let prompt = crate::agent::prompt::build_system_prompt(&profile, &answers, batch_size);
 
     let mut cmd = Command::new("claude");
     cmd.arg("-p").arg(&prompt);

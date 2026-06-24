@@ -13,6 +13,9 @@ export const api = {
   listApplications: () => invoke<Application[]>("list_applications"),
   listPending: () => invoke<PendingAction[]>("list_pending"),
   resolvePending: (id: number) => invoke<void>("resolve_pending", { id }),
+  listAnswers: () => invoke<{ question: string; answer: string }[]>("list_answers"),
+  saveAnswer: (question: string, answer: string) =>
+    invoke<void>("save_answer", { question, answer }),
   dashboardCounts: () => invoke<DashboardCounts>("dashboard_counts"),
   parseResume: (path: string) => invoke<string>("parse_resume", { path }),
   // Send both key cases: Tauri reads command args by exact name and ignores

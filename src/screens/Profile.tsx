@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
-import type { Criteria, Profile as ProfileT } from "../types";
+import type { Criteria, Profile as ProfileT, Screening } from "../types";
 import "../profile.css";
 
 const EMPTY_CRITERIA: Criteria = {
@@ -11,9 +11,19 @@ function parseCriteria(json: string): Criteria {
   try { return { ...EMPTY_CRITERIA, ...JSON.parse(json) }; } catch { return EMPTY_CRITERIA; }
 }
 
+const EMPTY_SCREENING: Screening = {
+  english_level: "", salary_expectation: "", salary_currency: "", address: "",
+  postal_code: "", work_authorization: "", availability: "",
+};
+
+function parseScreening(json: string): Screening {
+  try { return { ...EMPTY_SCREENING, ...JSON.parse(json) }; } catch { return EMPTY_SCREENING; }
+}
+
 export default function Profile() {
   const [profile, setProfile] = useState<ProfileT | null>(null);
   const [criteria, setCriteria] = useState<Criteria>(EMPTY_CRITERIA);
+  const [screening, setScreening] = useState<Screening>(EMPTY_SCREENING);
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -21,6 +31,7 @@ export default function Profile() {
     api.getProfile().then((p) => {
       setProfile(p);
       setCriteria(parseCriteria(p.criteria_json));
+      setScreening(parseScreening(p.screening_json));
     });
   }, []);
 
@@ -28,6 +39,7 @@ export default function Profile() {
 
   const setField = (k: keyof ProfileT, v: string) => setProfile({ ...profile, [k]: v });
   const setCrit = <K extends keyof Criteria,>(k: K, v: Criteria[K]) => setCriteria({ ...criteria, [k]: v });
+  const setScreen = (k: keyof Screening, v: string) => setScreening({ ...screening, [k]: v });
 
   async function analyze() {
     if (!profile!.cv_text.trim()) return;
@@ -57,7 +69,7 @@ export default function Profile() {
   async function save() {
     setBusy(true); setStatus(null);
     try {
-      await api.saveProfile({ ...profile!, criteria_json: JSON.stringify(criteria) });
+      await api.saveProfile({ ...profile!, criteria_json: JSON.stringify(criteria), screening_json: JSON.stringify(screening) });
       setStatus("Perfil salvo.");
     } catch (e) {
       setStatus(`Erro ao salvar: ${e}`);
@@ -102,6 +114,20 @@ export default function Profile() {
         <input value={criteria.red_lines.join(", ")}
           onChange={(e) => setCrit("red_lines", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} />
       </label>
+
+      <h2>Dados de triagem</h2>
+      <p className="hint">Respostas comuns que vagas pedem. O agente usa isto para responder sem te incomodar.</p>
+      <label>Nível de inglês<input value={screening.english_level} onChange={(e) => setScreen("english_level", e.target.value)} placeholder="Básico / Intermediário / Avançado / Fluente" /></label>
+      <label>Pretensão salarial<input value={screening.salary_expectation} onChange={(e) => setScreen("salary_expectation", e.target.value)} placeholder="ex.: 12000" /></label>
+      <label>Moeda
+        <select value={screening.salary_currency} onChange={(e) => setScreen("salary_currency", e.target.value)}>
+          <option value="">—</option><option value="BRL">BRL</option><option value="USD">USD</option><option value="EUR">EUR</option>
+        </select>
+      </label>
+      <label>Endereço<input value={screening.address} onChange={(e) => setScreen("address", e.target.value)} /></label>
+      <label>CEP<input value={screening.postal_code} onChange={(e) => setScreen("postal_code", e.target.value)} /></label>
+      <label>Autorização de trabalho<input value={screening.work_authorization} onChange={(e) => setScreen("work_authorization", e.target.value)} placeholder="ex.: CLT, PJ, cidadania, visto" /></label>
+      <label>Disponibilidade<input value={screening.availability} onChange={(e) => setScreen("availability", e.target.value)} placeholder="ex.: imediata, 30 dias" /></label>
 
       <div className="prof-actions">
         <button onClick={save} disabled={busy}>Salvar</button>
