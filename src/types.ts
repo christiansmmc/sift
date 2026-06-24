@@ -76,3 +76,12 @@ export interface DashboardCounts {
   submitted: number;
   pending: number;
 }
+
+export interface ReviewItem {
+  application_id: number;
+  job_title: string;
+  company: string;
+  url: string;
+  cover_letter: string;
+  answers_json: string;
+}
