@@ -1,0 +1,8 @@
+.prof { max-width: 640px; display: flex; flex-direction: column; gap: 10px; }
+.prof h2 { margin: 16px 0 4px; font-size: 16px; }
+.prof label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.prof input, .prof textarea, .prof select { padding: 8px; border: 1px solid #ccc; border-radius: 6px; font: inherit; }
+.prof input:disabled { background: #f0f0f0; color: #777; }
+.prof-actions { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+.prof-actions button { padding: 8px 24px; border: none; border-radius: 6px; background: #D97757; color: #fff; cursor: pointer; }
+.prof-status { color: #555; font-size: 14px; }

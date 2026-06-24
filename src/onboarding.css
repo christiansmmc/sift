@@ -1,0 +1,16 @@
+.onb { max-width: 640px; margin: 0 auto; padding: 32px 24px; display: flex; flex-direction: column; min-height: 100vh; }
+.onb-head h1 { margin: 0 0 12px; }
+.onb-steps { display: flex; gap: 8px; list-style: none; padding: 0; margin: 0 0 24px; font-size: 13px; }
+.onb-steps li { color: #888; padding: 4px 8px; border-radius: 6px; }
+.onb-steps li.current { background: #D97757; color: #fff; }
+.onb-steps li.done { color: #4caf50; }
+.onb-body { flex: 1; }
+.step { display: flex; flex-direction: column; gap: 12px; }
+.step label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.step input, .step textarea, .step select { padding: 8px; border: 1px solid #ccc; border-radius: 6px; font: inherit; }
+.row { display: flex; gap: 8px; }
+.hint { color: #888; font-size: 13px; margin: 4px 0 0; }
+.onb-error { color: #c0392b; }
+.onb-foot { display: flex; justify-content: space-between; padding-top: 16px; }
+.onb-foot button { padding: 8px 20px; border-radius: 6px; border: none; background: #D97757; color: #fff; cursor: pointer; }
+.onb-foot button:disabled { opacity: 0.5; cursor: default; }

@@ -46,16 +46,10 @@ pub fn upsert(conn: &Connection, p: &Profile) -> rusqlite::Result<()> {
     Ok(())
 }
 
-pub fn is_onboarding_complete(
-    conn: &Connection,
-    has_linkedin_credentials: bool,
-) -> rusqlite::Result<bool> {
+pub fn is_onboarding_complete(conn: &Connection) -> rusqlite::Result<bool> {
     let p = get(conn)?;
     let criteria_present = p.criteria_json.trim() != "{}" && !p.criteria_json.trim().is_empty();
-    Ok(!p.full_name.trim().is_empty()
-        && !p.cv_text.trim().is_empty()
-        && criteria_present
-        && has_linkedin_credentials)
+    Ok(!p.full_name.trim().is_empty() && !p.cv_text.trim().is_empty() && criteria_present)
 }
 
 #[cfg(test)]
@@ -101,16 +95,15 @@ mod tests {
     }
 
     #[test]
-    fn onboarding_incomplete_without_all_fields() {
+    fn onboarding_incomplete_until_all_fields_present() {
         let conn = open_in_memory();
-        assert!(!is_onboarding_complete(&conn, false).unwrap());
+        assert!(!is_onboarding_complete(&conn).unwrap());
         upsert(&conn, &Profile {
             full_name: "C".into(),
             cv_text: "cv".into(),
             criteria_json: r#"{"role":"backend"}"#.into(),
             ..Default::default()
         }).unwrap();
-        assert!(!is_onboarding_complete(&conn, false).unwrap());
-        assert!(is_onboarding_complete(&conn, true).unwrap());
+        assert!(is_onboarding_complete(&conn).unwrap());
     }
 }

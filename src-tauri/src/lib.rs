@@ -1,5 +1,7 @@
 mod commands;
+mod cv_analysis;
 mod db;
+mod resume;
 mod state;
 
 use tauri::Manager;
@@ -8,6 +10,7 @@ use tauri::Manager;
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let app_state = state::init(app);
             app.manage(app_state);
@@ -22,6 +25,8 @@ pub fn run() {
             commands::list_pending,
             commands::resolve_pending,
             commands::dashboard_counts,
+            commands::parse_resume,
+            commands::analyze_cv,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

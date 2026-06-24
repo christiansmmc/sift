@@ -1,3 +1,24 @@
+export interface Criteria {
+  role: string;
+  seniority: string;
+  work_model: string;
+  locations: string[];
+  salary_min: number | null;
+  red_lines: string[];
+}
+
+export interface PersonalData {
+  full_name: string;
+  email: string;
+  phone: string;
+  location: string;
+}
+
+export interface CvAnalysis {
+  personal: PersonalData;
+  criteria: Criteria;
+}
+
 export interface Profile {
   full_name: string;
   email: string;
