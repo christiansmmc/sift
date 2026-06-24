@@ -19,10 +19,6 @@ export const api = {
   // (cv_text). Avoids a silent runtime arg-mismatch on this multi-word param.
   analyzeCv: (cvText: string) =>
     invoke<CvAnalysis>("analyze_cv", { cvText, cv_text: cvText }),
-  saveLinkedinCredentials: (username: string, password: string) =>
-    invoke<void>("save_linkedin_credentials", { username, password }),
-  hasLinkedinCredentials: () => invoke<boolean>("has_linkedin_credentials"),
-  getLinkedinUsername: () => invoke<string | null>("get_linkedin_username"),
 };
 
 export async function pickResumeFile(): Promise<string | null> {

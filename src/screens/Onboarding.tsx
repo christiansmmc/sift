@@ -4,7 +4,6 @@ import type { Criteria, Profile } from "../types";
 import StepPersonal from "./onboarding/StepPersonal";
 import StepCv from "./onboarding/StepCv";
 import StepCriteria from "./onboarding/StepCriteria";
-import StepLinkedin from "./onboarding/StepLinkedin";
 import "../onboarding.css";
 
 const EMPTY_CRITERIA: Criteria = {
@@ -16,11 +15,10 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
   const [personal, setPersonal] = useState({ full_name: "", email: "", phone: "", location: "" });
   const [cvText, setCvText] = useState("");
   const [criteria, setCriteria] = useState<Criteria>(EMPTY_CRITERIA);
-  const [linkedin, setLinkedin] = useState({ username: "", password: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const steps = ["Currículo", "Seus dados", "O que você busca", "Login LinkedIn"];
+  const steps = ["Currículo", "Seus dados", "O que você busca"];
 
   async function finish() {
     setSaving(true);
@@ -32,7 +30,6 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
         criteria_json: JSON.stringify(criteria),
       };
       await api.saveProfile(profile);
-      await api.saveLinkedinCredentials(linkedin.username, linkedin.password);
       onDone();
     } catch (e) {
       setError(String(e));
@@ -43,9 +40,7 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
   const canFinish =
     personal.full_name.trim() !== "" &&
     cvText.trim() !== "" &&
-    criteria.role.trim() !== "" &&
-    linkedin.username.trim() !== "" &&
-    linkedin.password.trim() !== "";
+    criteria.role.trim() !== "";
 
   return (
     <div className="onb">
@@ -61,12 +56,11 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
         {step === 0 && <StepCv cvText={cvText} setCvText={setCvText} personal={personal} setPersonal={setPersonal} criteria={criteria} setCriteria={setCriteria} />}
         {step === 1 && <StepPersonal value={personal} onChange={setPersonal} />}
         {step === 2 && <StepCriteria value={criteria} onChange={setCriteria} />}
-        {step === 3 && <StepLinkedin value={linkedin} onChange={setLinkedin} />}
       </main>
       {error && <p className="onb-error">Erro ao salvar: {error}</p>}
       <footer className="onb-foot">
         <button disabled={step === 0 || saving} onClick={() => setStep((s) => s - 1)}>Voltar</button>
-        {step < 3 ? (
+        {step < 2 ? (
           <button onClick={() => setStep((s) => s + 1)}>Próximo</button>
         ) : (
           <button disabled={!canFinish || saving} onClick={finish}>

@@ -14,7 +14,6 @@ function parseCriteria(json: string): Criteria {
 export default function Profile() {
   const [profile, setProfile] = useState<ProfileT | null>(null);
   const [criteria, setCriteria] = useState<Criteria>(EMPTY_CRITERIA);
-  const [linkedinUser, setLinkedinUser] = useState<string>("");
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -23,7 +22,6 @@ export default function Profile() {
       setProfile(p);
       setCriteria(parseCriteria(p.criteria_json));
     });
-    api.getLinkedinUsername().then((u) => setLinkedinUser(u ?? ""));
   }, []);
 
   if (!profile) return <section className="prof"><h1>Perfil</h1><p>Carregando…</p></section>;
@@ -75,8 +73,6 @@ export default function Profile() {
       <label>E-mail<input value={profile.email} onChange={(e) => setField("email", e.target.value)} /></label>
       <label>Telefone<input value={profile.phone} onChange={(e) => setField("phone", e.target.value)} /></label>
       <label>Localização<input value={profile.location} onChange={(e) => setField("location", e.target.value)} /></label>
-      <label>LinkedIn<input value={linkedinUser} disabled title="Editável na reconfiguração de credenciais" /></label>
-
       <h2>Currículo</h2>
       <label><textarea rows={10} value={profile.cv_text} onChange={(e) => setField("cv_text", e.target.value)} /></label>
       <button onClick={analyze} disabled={busy || !profile.cv_text.trim()}>
