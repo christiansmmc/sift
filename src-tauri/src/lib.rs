@@ -1,3 +1,4 @@
+mod agent;
 mod commands;
 mod cv_analysis;
 mod db;
