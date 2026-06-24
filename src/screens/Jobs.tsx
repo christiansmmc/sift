@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { api } from "../lib/api";
 import type { Job, ReviewItem } from "../types";
+
+// Open external links in the system browser (a plain <a target=_blank> does
+// nothing inside the Tauri webview).
+function openExternal(e: React.MouseEvent, url: string) {
+  e.preventDefault();
+  openUrl(url);
+}
 
 export default function Jobs() {
   const [review, setReview] = useState<ReviewItem[]>([]);
@@ -28,7 +36,7 @@ export default function Jobs() {
       {review.map((r) => (
         <div key={r.application_id} style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, margin: "12px 0" }}>
           <strong>{r.job_title}</strong> — {r.company}{" "}
-          <a href={r.url} target="_blank" rel="noreferrer">ver vaga</a>
+          <a href={r.url} onClick={(e) => openExternal(e, r.url)}>ver vaga</a>
           <details style={{ margin: "8px 0" }}>
             <summary>Carta de apresentação</summary>
             <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit" }}>{r.cover_letter}</pre>
@@ -51,7 +59,7 @@ export default function Jobs() {
       <ul>
         {found.map((j) => (
           <li key={j.id}>
-            <a href={j.url} target="_blank" rel="noreferrer">{j.title}</a> — {j.company}
+            <a href={j.url} onClick={(e) => openExternal(e, j.url)}>{j.title}</a> — {j.company}
             {j.match_summary ? ` · ${j.match_summary}` : ""}
           </li>
         ))}
