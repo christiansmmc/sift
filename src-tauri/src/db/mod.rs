@@ -13,10 +13,27 @@ pub fn apply_schema(conn: &Connection) -> rusqlite::Result<()> {
     conn.execute_batch(SCHEMA)
 }
 
+/// Add columns introduced after the initial schema. Idempotent: ignores
+/// "duplicate column" errors so it is safe to run on every open.
+fn migrate(conn: &Connection) -> rusqlite::Result<()> {
+    for stmt in [
+        "ALTER TABLE applications ADD COLUMN cover_letter TEXT",
+        "ALTER TABLE applications ADD COLUMN answers_json TEXT",
+    ] {
+        match conn.execute(stmt, []) {
+            Ok(_) => {}
+            Err(rusqlite::Error::SqliteFailure(_, Some(msg))) if msg.contains("duplicate column name") => {}
+            Err(e) => return Err(e),
+        }
+    }
+    Ok(())
+}
+
 pub fn open_at(path: &Path) -> rusqlite::Result<Connection> {
     let conn = Connection::open(path)?;
     configure(&conn)?;
     apply_schema(&conn)?;
+    migrate(&conn)?;
     Ok(conn)
 }
 
@@ -30,6 +47,7 @@ pub fn open_in_memory() -> Connection {
     let conn = Connection::open_in_memory().expect("open in-memory db");
     configure(&conn).expect("configure connection");
     apply_schema(&conn).expect("apply schema");
+    migrate(&conn).expect("migrate");
     conn
 }
 
@@ -55,6 +73,20 @@ mod tests {
     fn apply_schema_is_idempotent() {
         let conn = open_in_memory();
         apply_schema(&conn).expect("second apply must not fail");
+    }
+
+    #[test]
+    fn migration_adds_generated_columns_idempotently() {
+        let conn = open_in_memory();
+        // second run must not error
+        migrate(&conn).expect("idempotent migrate");
+        let cols: Vec<String> = {
+            let mut stmt = conn.prepare("PRAGMA table_info(applications)").unwrap();
+            let rows = stmt.query_map([], |r| r.get::<_, String>(1)).unwrap();
+            rows.map(|r| r.unwrap()).collect()
+        };
+        assert!(cols.contains(&"cover_letter".to_string()));
+        assert!(cols.contains(&"answers_json".to_string()));
     }
 
     #[test]

@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { open } from "@tauri-apps/plugin-dialog";
 import type {
   Profile, Job, Application, PendingAction, DashboardCounts, CvAnalysis,
@@ -19,6 +20,10 @@ export const api = {
   // (cv_text). Avoids a silent runtime arg-mismatch on this multi-word param.
   analyzeCv: (cvText: string) =>
     invoke<CvAnalysis>("analyze_cv", { cvText, cv_text: cvText }),
+  startSearchBatch: (batchSize: number) =>
+    invoke<void>("start_search_batch", { batchSize }),
+  stopAgent: () => invoke<void>("stop_agent"),
+  agentRunning: () => invoke<boolean>("agent_running"),
 };
 
 export async function pickResumeFile(): Promise<string | null> {
@@ -27,4 +32,8 @@ export async function pickResumeFile(): Promise<string | null> {
     filters: [{ name: "Currículo", extensions: ["pdf", "docx"] }],
   });
   return typeof result === "string" ? result : null;
+}
+
+export function onAgentEvent(cb: (payload: string) => void) {
+  return listen<string>("agent://event", (e) => cb(e.payload));
 }

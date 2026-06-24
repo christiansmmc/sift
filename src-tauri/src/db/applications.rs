@@ -61,6 +61,31 @@ pub fn list(conn: &Connection) -> rusqlite::Result<Vec<Application>> {
     rows.collect()
 }
 
+/// True if the job already has an application that is awaiting approval or submitted.
+pub fn has_open_application(conn: &Connection, job_id: i64) -> rusqlite::Result<bool> {
+    let n: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM applications WHERE job_id = ?1 AND status IN ('awaiting_approval','submitted')",
+        [job_id],
+        |r| r.get(0),
+    )?;
+    Ok(n > 0)
+}
+
+/// Create an application already carrying generated content, awaiting approval.
+pub fn create_with_content(
+    conn: &Connection,
+    job_id: i64,
+    cover_letter: &str,
+    answers_json: &str,
+) -> rusqlite::Result<i64> {
+    conn.execute(
+        "INSERT INTO applications (job_id, status, cover_letter, answers_json) \
+         VALUES (?1, 'awaiting_approval', ?2, ?3)",
+        (job_id, cover_letter, answers_json),
+    )?;
+    Ok(conn.last_insert_rowid())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

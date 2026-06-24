@@ -1,9 +1,10 @@
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use rusqlite::Connection;
 use tauri::Manager;
 
 pub struct AppState {
-    pub db: Mutex<Connection>,
+    pub db: Arc<Mutex<Connection>>,
+    pub agent: Mutex<Option<crate::agent::runner::AgentHandle>>,
 }
 
 pub fn init(app: &tauri::App) -> AppState {
@@ -13,5 +14,5 @@ pub fn init(app: &tauri::App) -> AppState {
         .expect("resolve app data dir");
     std::fs::create_dir_all(&data_dir).expect("create app data dir");
     let conn = crate::db::open_at(&data_dir.join("applybot.db")).expect("open applybot.db");
-    AppState { db: Mutex::new(conn) }
+    AppState { db: Arc::new(Mutex::new(conn)), agent: Mutex::new(None) }
 }
