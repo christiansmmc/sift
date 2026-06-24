@@ -120,6 +120,10 @@ pub fn start_search_batch(
         profile,
         batch_size.unwrap_or(10),
     )?;
+    // Stop and drop any finished-but-lingering handle before replacing it.
+    if let Some(old) = slot.take() {
+        old.stop();
+    }
     *slot = Some(handle);
     Ok(())
 }

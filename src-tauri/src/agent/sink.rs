@@ -24,9 +24,11 @@ pub fn apply_event(conn: &Connection, event: &AgentEvent) -> rusqlite::Result<Ev
                 },
             )?;
             jobs::set_status(conn, job_id, "analyzed", Some(&j.match_summary))?;
-            let answers_json = serde_json::to_string(&j.answers)
-                .unwrap_or_else(|_| "[]".into());
-            applications::create_with_content(conn, job_id, &j.cover_letter, &answers_json)?;
+            if !applications::has_open_application(conn, job_id)? {
+                let answers_json = serde_json::to_string(&j.answers)
+                    .unwrap_or_else(|_| "[]".into());
+                applications::create_with_content(conn, job_id, &j.cover_letter, &answers_json)?;
+            }
             Ok(EventOutcome::Queued)
         }
         AgentEvent::Pending(p) => {
@@ -83,6 +85,19 @@ mod tests {
         let p = pending::list_open(&conn).unwrap();
         assert_eq!(p.len(), 1);
         assert_eq!(p[0].category, "login_required");
+    }
+
+    #[test]
+    fn duplicate_job_event_does_not_duplicate_application() {
+        let conn = open_in_memory();
+        let ev = AgentEvent::Job(JobReport {
+            title: "Dev".into(), company: "Acme".into(),
+            url: "https://linkedin.com/jobs/1".into(),
+            match_summary: "ok".into(), cover_letter: "Hi".into(), answers: vec![],
+        });
+        apply_event(&conn, &ev).unwrap();
+        apply_event(&conn, &ev).unwrap(); // same job reported again
+        assert_eq!(applications::list(&conn).unwrap().len(), 1);
     }
 
     #[test]

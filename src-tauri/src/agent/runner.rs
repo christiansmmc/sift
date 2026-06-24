@@ -18,7 +18,10 @@ pub fn process_line_with(
 ) -> Option<EventOutcome> {
     let event = parse_line(line)?;
     let outcome = {
-        let conn = db.lock().ok()?;
+        let conn = match db.lock() {
+            Ok(c) => c,
+            Err(poisoned) => poisoned.into_inner(),
+        };
         apply_event(&conn, &event).ok()?
     };
     emit("agent://event", format!("{:?}", outcome));
@@ -68,6 +71,12 @@ impl AgentHandle {
         if let Ok(mut c) = self.child.lock() {
             let _ = c.kill();
         }
+    }
+}
+
+impl Drop for AgentHandle {
+    fn drop(&mut self) {
+        self.stop();
     }
 }
 
@@ -149,6 +158,13 @@ pub fn start(
                     break;
                 }
             }
+        }
+        // Kill/reap the child unconditionally so a stream-close exit (no terminal
+        // marker) never leaves a zombie or leaked `claude` process. Killing an
+        // already-dead child is a no-op.
+        if let Ok(mut c) = child_t.lock() {
+            let _ = c.kill();
+            let _ = c.wait();
         }
         // Mark finished when the process ends or the stream closes.
         stop_t.store(true, Ordering::SeqCst);
