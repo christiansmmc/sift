@@ -31,6 +31,8 @@ pub fn run() {
             commands::start_search_batch,
             commands::stop_agent,
             commands::agent_running,
+            commands::list_answers,
+            commands::save_answer,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

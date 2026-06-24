@@ -3,7 +3,7 @@ use std::sync::Arc;
 use serde::Serialize;
 use tauri::State;
 
-use crate::db::{applications, jobs, pending, profile};
+use crate::db::{answers, applications, jobs, pending, profile};
 use crate::state::AppState;
 
 type CmdResult<T> = Result<T, String>;
@@ -145,4 +145,26 @@ pub fn agent_running(state: State<AppState>) -> CmdResult<bool> {
         .as_ref()
         .map(|h| h.is_running())
         .unwrap_or(false))
+}
+
+#[derive(Debug, Serialize)]
+pub struct AnswerPair {
+    pub question: String,
+    pub answer: String,
+}
+
+#[tauri::command]
+pub fn list_answers(state: State<AppState>) -> CmdResult<Vec<AnswerPair>> {
+    let conn = state.db.lock().map_err(err)?;
+    let pairs = answers::list(&conn).map_err(err)?;
+    Ok(pairs
+        .into_iter()
+        .map(|(question, answer)| AnswerPair { question, answer })
+        .collect())
+}
+
+#[tauri::command]
+pub fn save_answer(state: State<AppState>, question: String, answer: String) -> CmdResult<()> {
+    let conn = state.db.lock().map_err(err)?;
+    answers::upsert(&conn, &question, &answer).map_err(err)
 }
