@@ -1,5 +1,4 @@
 mod commands;
-mod credentials;
 mod cv_analysis;
 mod db;
 mod resume;
@@ -27,9 +26,6 @@ pub fn run() {
             commands::resolve_pending,
             commands::dashboard_counts,
             commands::parse_resume,
-            commands::save_linkedin_credentials,
-            commands::has_linkedin_credentials,
-            commands::get_linkedin_username,
             commands::analyze_cv,
         ])
         .run(tauri::generate_context!())
