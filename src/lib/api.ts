@@ -14,7 +14,11 @@ export const api = {
   resolvePending: (id: number) => invoke<void>("resolve_pending", { id }),
   dashboardCounts: () => invoke<DashboardCounts>("dashboard_counts"),
   parseResume: (path: string) => invoke<string>("parse_resume", { path }),
-  analyzeCv: (cvText: string) => invoke<Criteria>("analyze_cv", { cv_text: cvText }),
+  // Send both key cases: Tauri reads command args by exact name and ignores
+  // extras, so this works whether it expects camelCase (cvText) or snake_case
+  // (cv_text). Avoids a silent runtime arg-mismatch on this multi-word param.
+  analyzeCv: (cvText: string) =>
+    invoke<Criteria>("analyze_cv", { cvText, cv_text: cvText }),
   saveLinkedinCredentials: (username: string, password: string) =>
     invoke<void>("save_linkedin_credentials", { username, password }),
   hasLinkedinCredentials: () => invoke<boolean>("has_linkedin_credentials"),
