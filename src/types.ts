@@ -19,6 +19,16 @@ export interface CvAnalysis {
   criteria: Criteria;
 }
 
+export interface Screening {
+  english_level: string;
+  salary_expectation: string;
+  salary_currency: string;
+  address: string;
+  postal_code: string;
+  work_authorization: string;
+  availability: string;
+}
+
 export interface Profile {
   full_name: string;
   email: string;
@@ -26,6 +36,7 @@ export interface Profile {
   location: string;
   cv_text: string;
   criteria_json: string;
+  screening_json: string;
 }
 
 export interface Job {
