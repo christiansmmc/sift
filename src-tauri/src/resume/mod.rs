@@ -40,6 +40,31 @@ pub fn extract_docx(bytes: &[u8]) -> Result<String, String> {
     Ok(out.trim().to_string())
 }
 
+/// Choose an extractor by file extension and read the file from disk.
+pub fn extract_from_path(path: &str) -> Result<String, String> {
+    let lower = path.to_lowercase();
+    if !(lower.ends_with(".pdf") || lower.ends_with(".docx")) {
+        return Err("Formato não suportado: use PDF ou DOCX".to_string());
+    }
+    let bytes = std::fs::read(path).map_err(|e| format!("read {path}: {e}"))?;
+    if lower.ends_with(".pdf") {
+        extract_pdf(&bytes)
+    } else {
+        extract_docx(&bytes)
+    }
+}
+
+#[cfg(test)]
+mod path_tests {
+    use super::*;
+
+    #[test]
+    fn extract_from_path_rejects_unknown_extension() {
+        let err = extract_from_path("resume.txt").unwrap_err();
+        assert!(err.contains("Formato não suportado"));
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

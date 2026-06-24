@@ -74,3 +74,8 @@ pub fn dashboard_counts(state: State<AppState>) -> CmdResult<DashboardCounts> {
     let pending_count = pending::count_open(&conn).map_err(err)?;
     Ok(DashboardCounts { found, awaiting_approval, submitted, pending: pending_count })
 }
+
+#[tauri::command]
+pub fn parse_resume(path: String) -> CmdResult<String> {
+    crate::resume::extract_from_path(&path)
+}
