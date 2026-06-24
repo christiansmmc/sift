@@ -1,3 +1,12 @@
+export interface Criteria {
+  role: string;
+  seniority: string;
+  work_model: string;
+  locations: string[];
+  salary_min: number | null;
+  red_lines: string[];
+}
+
 export interface Profile {
   full_name: string;
   email: string;
