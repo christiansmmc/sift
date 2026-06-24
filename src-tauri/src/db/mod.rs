@@ -13,6 +13,8 @@ pub fn open_at(path: &Path) -> rusqlite::Result<Connection> {
     Ok(conn)
 }
 
+pub mod jobs;
+
 #[cfg(test)]
 pub fn open_in_memory() -> Connection {
     let conn = Connection::open_in_memory().expect("open in-memory db");
