@@ -67,6 +67,7 @@ export interface PendingAction {
   description: string;
   resolved: boolean;
   created_at: string;
+  questions: string[];
 }
 
 export interface DashboardCounts {
