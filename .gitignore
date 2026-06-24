@@ -25,3 +25,6 @@ dist-ssr
 
 # Tauri build output
 src-tauri/target/
+
+# SDD scratch (progress ledger, task reports)
+.superpowers/
