@@ -1,6 +1,15 @@
-//! AgentRunner: spawn `claude --chrome` over a PTY, feed it the system prompt,
-//! and process stdout lines into the DB via the marker protocol.
+//! Agent runner: launches the Claude Code CLI headless (`claude -p`) with the
+//! Claude-in-Chrome integration, streams its JSON output, extracts the agent's
+//! text, parses our marker protocol from it, and persists results to the DB.
+//!
+//! Headless `-p` (print) mode is used deliberately: interactive `claude`
+//! renders a full terminal UI (ANSI control codes) that carries no clean
+//! marker lines. `-p --output-format stream-json` emits one JSON event per
+//! line, including every assistant message across turns, from which we recover
+//! the marker lines the agent prints.
 
+use std::io::{BufRead, BufReader};
+use std::process::{Command, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 
@@ -9,8 +18,66 @@ use rusqlite::Connection;
 use super::protocol::parse_line;
 use super::sink::{apply_event, EventOutcome};
 
-/// Parse one stdout line → persist → emit. Returns the outcome if it was a
-/// marker line (None for ordinary agent chatter). Pure seam: no PTY, no Tauri.
+/// Opt-in debug instrumentation: when the `APPLYBOT_DEBUG` env var is set,
+/// append a line to `applybot-agent.log` in the temp dir so we can see exactly
+/// what the agent process emits. Off by default — it would otherwise write the
+/// prompt (which includes the CV) and job data to a plaintext temp file.
+fn dbg_log(msg: &str) {
+    if std::env::var_os("APPLYBOT_DEBUG").is_none() {
+        return;
+    }
+    use std::io::Write;
+    let path = std::env::temp_dir().join("applybot-agent.log");
+    if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(path) {
+        let _ = writeln!(f, "{msg}");
+    }
+}
+
+/// Static flags for the headless agent invocation. The dynamic `-p <prompt>`
+/// is added by `start`. `stream-json` requires `--verbose`.
+pub fn agent_args() -> Vec<String> {
+    vec![
+        "--chrome".to_string(),
+        "--dangerously-skip-permissions".to_string(),
+        "--output-format".to_string(),
+        "stream-json".to_string(),
+        "--verbose".to_string(),
+    ]
+}
+
+/// Pull the agent's plain-text lines out of a single `stream-json` event line.
+/// Returns the individual text lines from an `assistant` message or the final
+/// `result`, or an empty vec for any other event / non-JSON line.
+pub fn extract_text_lines(json_line: &str) -> Vec<String> {
+    let v: serde_json::Value = match serde_json::from_str(json_line.trim()) {
+        Ok(v) => v,
+        Err(_) => return Vec::new(),
+    };
+    let mut out = Vec::new();
+    match v.get("type").and_then(|t| t.as_str()) {
+        Some("assistant") => {
+            if let Some(content) = v.pointer("/message/content").and_then(|c| c.as_array()) {
+                for block in content {
+                    if block.get("type").and_then(|t| t.as_str()) == Some("text") {
+                        if let Some(text) = block.get("text").and_then(|t| t.as_str()) {
+                            out.extend(text.lines().map(|l| l.to_string()));
+                        }
+                    }
+                }
+            }
+        }
+        Some("result") => {
+            if let Some(text) = v.get("result").and_then(|t| t.as_str()) {
+                out.extend(text.lines().map(|l| l.to_string()));
+            }
+        }
+        _ => {}
+    }
+    out
+}
+
+/// Parse one plain-text line → persist → emit. Returns the outcome if it was a
+/// marker line (None for ordinary chatter). Pure seam: no process, no Tauri.
 pub fn process_line_with(
     line: &str,
     db: &Mutex<Connection>,
@@ -18,13 +85,14 @@ pub fn process_line_with(
 ) -> Option<EventOutcome> {
     let event = parse_line(line)?;
     let outcome = {
+        // Recover a poisoned guard rather than silently dropping every event.
         let conn = match db.lock() {
             Ok(c) => c,
             Err(poisoned) => poisoned.into_inner(),
         };
         apply_event(&conn, &event).ok()?
     };
-    emit("agent://event", format!("{:?}", outcome));
+    emit("agent://event", format!("{outcome:?}"));
     Some(outcome)
 }
 
@@ -33,39 +101,15 @@ pub fn is_terminal(outcome: &EventOutcome) -> bool {
     matches!(outcome, EventOutcome::Done | EventOutcome::LoginRequired)
 }
 
-/// The CLI command + args to launch the agent. Isolated so a test could swap it.
-pub fn agent_command() -> (String, Vec<String>) {
-    (
-        "claude".to_string(),
-        vec![
-            "--chrome".to_string(),
-            "--dangerously-skip-permissions".to_string(),
-        ],
-    )
-}
-
-/// Handle to a running agent subprocess.
-///
-/// Fields beyond `stop` and `child`:
-/// - `_master`: the PTY master side must remain alive for the duration of the run.
-///   On Windows (ConPTY), closing the master terminates the child immediately, so we
-///   keep it here rather than dropping it after `spawn_command`.
-/// - `_writer`: the write end of the PTY master. `take_writer` moves it out of the
-///   master, so we must store it separately to keep the underlying handle open.
 pub struct AgentHandle {
     stop: Arc<AtomicBool>,
-    child: Arc<Mutex<Box<dyn portable_pty::Child + Send + Sync>>>,
-    /// Keeps the PTY master alive so the child process is not killed by an early drop.
-    _master: Box<dyn portable_pty::MasterPty + Send>,
-    /// Keeps the PTY write-end open for the same reason.
-    _writer: Box<dyn std::io::Write + Send>,
+    child: Arc<Mutex<std::process::Child>>,
 }
 
 impl AgentHandle {
     pub fn is_running(&self) -> bool {
         !self.stop.load(Ordering::SeqCst)
     }
-
     pub fn stop(&self) {
         self.stop.store(true, Ordering::SeqCst);
         if let Ok(mut c) = self.child.lock() {
@@ -80,93 +124,93 @@ impl Drop for AgentHandle {
     }
 }
 
-/// Spawn `claude --chrome` over a PTY, write the system prompt, and start the
-/// reader thread. Returns an `AgentHandle` that the caller can use to stop the run.
+/// Spawn the headless agent and start streaming its output into the DB.
 pub fn start(
     db: Arc<Mutex<Connection>>,
     app: tauri::AppHandle,
     profile: crate::db::profile::Profile,
     batch_size: u32,
 ) -> Result<AgentHandle, String> {
-    use portable_pty::{native_pty_system, CommandBuilder, PtySize};
+    let prompt = crate::agent::prompt::build_system_prompt(&profile, batch_size);
 
-    let pty = native_pty_system();
-    let pair = pty
-        .openpty(PtySize {
-            rows: 40,
-            cols: 120,
-            pixel_width: 0,
-            pixel_height: 0,
-        })
-        .map_err(|e| e.to_string())?;
-
-    // Build the command from the isolated function so tests can verify args.
-    let (cmd_name, args) = agent_command();
-    let mut cmd = CommandBuilder::new(cmd_name);
-    for a in args {
+    let mut cmd = Command::new("claude");
+    cmd.arg("-p").arg(&prompt);
+    for a in agent_args() {
         cmd.arg(a);
     }
+    cmd.stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
 
-    // Spawn into the PTY slave side.
-    let child = pair
-        .slave
-        .spawn_command(cmd)
-        .map_err(|e| e.to_string())?;
+    let mut child = cmd
+        .spawn()
+        .map_err(|e| format!("Falha ao iniciar o agente (claude): {e}"))?;
 
-    // Claim the master reader and writer BEFORE moving anything into the thread.
-    let reader = pair.master.try_clone_reader().map_err(|e| e.to_string())?;
-    let mut writer = pair.master.take_writer().map_err(|e| e.to_string())?;
-
-    // Write the system prompt so the agent starts immediately.
-    let prompt = crate::agent::prompt::build_system_prompt(&profile, batch_size);
-    {
-        use std::io::Write;
-        writer
-            .write_all(prompt.as_bytes())
-            .map_err(|e| e.to_string())?;
-        writer.write_all(b"\n").map_err(|e| e.to_string())?;
-        writer.flush().ok();
+    dbg_log(&format!(
+        "=== START: claude -p (prompt {} bytes) args={:?} ===",
+        prompt.len(),
+        agent_args()
+    ));
+    if std::env::var_os("APPLYBOT_DEBUG").is_some() {
+        let _ = std::fs::write(std::env::temp_dir().join("applybot-prompt.txt"), &prompt);
     }
+
+    let stdout = child.stdout.take().ok_or("no child stdout")?;
+    let stderr = child.stderr.take().ok_or("no child stderr")?;
 
     let stop = Arc::new(AtomicBool::new(false));
     let child = Arc::new(Mutex::new(child));
 
-    // Spawn the reader thread. Clones of the Arcs are moved in.
+    // stderr → debug log (helps diagnose CLI/connection errors)
+    std::thread::spawn(move || {
+        let buf = BufReader::new(stderr);
+        for line in buf.lines().map_while(Result::ok) {
+            dbg_log(&format!("STDERR: {line}"));
+        }
+    });
+
+    // stdout → stream-json events → marker lines → DB
     let stop_t = stop.clone();
     let child_t = child.clone();
     std::thread::spawn(move || {
-        use std::io::{BufRead, BufReader};
-        let buf = BufReader::new(reader);
-        for line in buf.lines() {
+        dbg_log("=== READER THREAD STARTED ===");
+        let buf = BufReader::new(stdout);
+        'outer: for json_line in buf.lines() {
             if stop_t.load(Ordering::SeqCst) {
                 break;
             }
-            let Ok(line) = line else {
-                break;
-            };
-            let app2 = app.clone();
-            let outcome = process_line_with(&line, &db, |ev, payload| {
-                use tauri::Emitter;
-                let _ = app2.emit(ev, payload);
-            });
-            if let Some(o) = outcome {
-                if is_terminal(&o) {
-                    stop_t.store(true, Ordering::SeqCst);
-                    if let Ok(mut c) = child_t.lock() {
-                        let _ = c.kill();
-                    }
+            let json_line = match json_line {
+                Ok(l) => l,
+                Err(e) => {
+                    dbg_log(&format!("READ ERROR: {e}"));
                     break;
+                }
+            };
+            dbg_log(&format!("RAW: {json_line}"));
+            for text_line in extract_text_lines(&json_line) {
+                dbg_log(&format!("TEXT: {text_line}"));
+                let app2 = app.clone();
+                let outcome = process_line_with(&text_line, &db, |ev, payload| {
+                    use tauri::Emitter;
+                    let _ = app2.emit(ev, payload);
+                });
+                if let Some(o) = outcome {
+                    if is_terminal(&o) {
+                        stop_t.store(true, Ordering::SeqCst);
+                        if let Ok(mut c) = child_t.lock() {
+                            let _ = c.kill();
+                        }
+                        break 'outer;
+                    }
                 }
             }
         }
-        // Kill/reap the child unconditionally so a stream-close exit (no terminal
-        // marker) never leaves a zombie or leaked `claude` process. Killing an
-        // already-dead child is a no-op.
+        dbg_log("=== READER LOOP EXITED ===");
+        // Always reap the child so a stream-close exit never leaks a process.
         if let Ok(mut c) = child_t.lock() {
             let _ = c.kill();
             let _ = c.wait();
         }
-        // Mark finished when the process ends or the stream closes.
         stop_t.store(true, Ordering::SeqCst);
         {
             use tauri::Emitter;
@@ -174,14 +218,7 @@ pub fn start(
         }
     });
 
-    // Keep the PTY master and writer alive in the handle so ConPTY (Windows)
-    // does not terminate the child when they go out of scope.
-    Ok(AgentHandle {
-        stop,
-        child,
-        _master: pair.master,
-        _writer: writer,
-    })
+    Ok(AgentHandle { stop, child })
 }
 
 #[cfg(test)]
@@ -207,5 +244,20 @@ mod tests {
         let db = Mutex::new(open_in_memory());
         let outcome = process_line_with("just thinking out loud", &db, |_e, _p| {});
         assert_eq!(outcome, None);
+    }
+
+    #[test]
+    fn extract_text_lines_pulls_assistant_text() {
+        let line = r#"{"type":"assistant","message":{"content":[{"type":"text","text":"line one\nAPPLYBOT_DONE"}]}}"#;
+        let lines = extract_text_lines(line);
+        assert_eq!(lines, vec!["line one".to_string(), "APPLYBOT_DONE".to_string()]);
+    }
+
+    #[test]
+    fn extract_text_lines_handles_result_and_ignores_other() {
+        let result = r#"{"type":"result","subtype":"success","result":"APPLYBOT_DONE"}"#;
+        assert_eq!(extract_text_lines(result), vec!["APPLYBOT_DONE".to_string()]);
+        assert!(extract_text_lines(r#"{"type":"system","subtype":"init"}"#).is_empty());
+        assert!(extract_text_lines("not json at all").is_empty());
     }
 }
