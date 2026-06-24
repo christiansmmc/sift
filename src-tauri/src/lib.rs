@@ -1,5 +1,6 @@
 mod commands;
 mod credentials;
+mod cv_analysis;
 mod db;
 mod resume;
 mod state;
@@ -29,6 +30,7 @@ pub fn run() {
             commands::save_linkedin_credentials,
             commands::has_linkedin_credentials,
             commands::get_linkedin_username,
+            commands::analyze_cv,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

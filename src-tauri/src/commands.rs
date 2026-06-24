@@ -94,3 +94,8 @@ pub fn has_linkedin_credentials() -> CmdResult<bool> {
 pub fn get_linkedin_username() -> CmdResult<Option<String>> {
     Ok(crate::credentials::current_username())
 }
+
+#[tauri::command]
+pub fn analyze_cv(cv_text: String) -> CmdResult<crate::cv_analysis::Criteria> {
+    Ok(crate::cv_analysis::analyze(&cv_text))
+}
