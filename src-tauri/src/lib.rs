@@ -33,6 +33,10 @@ pub fn run() {
             commands::agent_running,
             commands::list_answers,
             commands::save_answer,
+            commands::list_review_queue,
+            commands::list_found_jobs,
+            commands::approve_application,
+            commands::reject_application,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

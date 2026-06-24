@@ -63,6 +63,21 @@ pub fn set_status(
     Ok(())
 }
 
+/// Jobs that have no application row yet (Scan-mode discoveries).
+pub fn without_application(conn: &Connection) -> rusqlite::Result<Vec<Job>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, title, company, url, source, status, match_summary, discovered_at \
+         FROM jobs WHERE id NOT IN (SELECT job_id FROM applications) ORDER BY id DESC",
+    )?;
+    let rows = stmt.query_map([], |r| {
+        Ok(Job {
+            id: r.get(0)?, title: r.get(1)?, company: r.get(2)?, url: r.get(3)?,
+            source: r.get(4)?, status: r.get(5)?, match_summary: r.get(6)?, discovered_at: r.get(7)?,
+        })
+    })?;
+    rows.collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -104,5 +119,16 @@ mod tests {
         let job = &list(&conn).unwrap()[0];
         assert_eq!(job.status, "analyzed");
         assert_eq!(job.match_summary.as_deref(), Some("covers 3/4 must-haves"));
+    }
+
+    #[test]
+    fn without_application_excludes_jobs_that_have_one() {
+        let conn = crate::db::open_in_memory();
+        let a = insert(&conn, &NewJob { title:"A".into(), company:"X".into(), url:"u1".into(), source:"linkedin".into() }).unwrap();
+        let _b = insert(&conn, &NewJob { title:"B".into(), company:"Y".into(), url:"u2".into(), source:"linkedin".into() }).unwrap();
+        crate::db::applications::create_with_content(&conn, a, "cl", "[]").unwrap();
+        let found = without_application(&conn).unwrap();
+        assert_eq!(found.len(), 1);
+        assert_eq!(found[0].url, "u2");
     }
 }

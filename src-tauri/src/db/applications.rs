@@ -86,6 +86,36 @@ pub fn create_with_content(
     Ok(conn.last_insert_rowid())
 }
 
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct ReviewItem {
+    pub application_id: i64,
+    pub job_title: String,
+    pub company: String,
+    pub url: String,
+    pub cover_letter: String,
+    pub answers_json: String,
+}
+
+pub fn review_queue(conn: &Connection) -> rusqlite::Result<Vec<ReviewItem>> {
+    let mut stmt = conn.prepare(
+        "SELECT a.id, j.title, j.company, j.url, \
+                COALESCE(a.cover_letter,''), COALESCE(a.answers_json,'[]') \
+         FROM applications a JOIN jobs j ON a.job_id = j.id \
+         WHERE a.status = 'awaiting_approval' ORDER BY a.id DESC",
+    )?;
+    let rows = stmt.query_map([], |r| {
+        Ok(ReviewItem {
+            application_id: r.get(0)?,
+            job_title: r.get(1)?,
+            company: r.get(2)?,
+            url: r.get(3)?,
+            cover_letter: r.get(4)?,
+            answers_json: r.get(5)?,
+        })
+    })?;
+    rows.collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -124,5 +154,19 @@ mod tests {
         let app = &list(&conn).unwrap()[0];
         assert_eq!(app.status, "submitted");
         assert!(app.submitted_at.is_some());
+    }
+
+    #[test]
+    fn review_queue_returns_awaiting_items_with_content() {
+        let conn = open_in_memory();
+        let job_id = jobs::insert(&conn, &jobs::NewJob {
+            title: "Dev".into(), company: "Acme".into(),
+            url: "https://linkedin.com/jobs/1".into(), source: "linkedin".into(),
+        }).unwrap();
+        create_with_content(&conn, job_id, "Dear Acme", r#"[{"question":"Q","answer":"A"}]"#).unwrap();
+        let q = review_queue(&conn).unwrap();
+        assert_eq!(q.len(), 1);
+        assert_eq!(q[0].company, "Acme");
+        assert_eq!(q[0].cover_letter, "Dear Acme");
     }
 }

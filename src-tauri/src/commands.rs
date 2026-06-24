@@ -174,3 +174,27 @@ pub fn save_answer(state: State<AppState>, question: String, answer: String) -> 
     let conn = state.db.lock().map_err(err)?;
     answers::upsert(&conn, &question, &answer).map_err(err)
 }
+
+#[tauri::command]
+pub fn list_review_queue(state: State<AppState>) -> CmdResult<Vec<applications::ReviewItem>> {
+    let conn = state.db.lock().map_err(err)?;
+    applications::review_queue(&conn).map_err(err)
+}
+
+#[tauri::command]
+pub fn list_found_jobs(state: State<AppState>) -> CmdResult<Vec<jobs::Job>> {
+    let conn = state.db.lock().map_err(err)?;
+    jobs::without_application(&conn).map_err(err)
+}
+
+#[tauri::command]
+pub fn approve_application(state: State<AppState>, id: i64) -> CmdResult<()> {
+    let conn = state.db.lock().map_err(err)?;
+    applications::set_status(&conn, id, "approved").map_err(err)
+}
+
+#[tauri::command]
+pub fn reject_application(state: State<AppState>, id: i64) -> CmdResult<()> {
+    let conn = state.db.lock().map_err(err)?;
+    applications::set_status(&conn, id, "discarded").map_err(err)
+}
