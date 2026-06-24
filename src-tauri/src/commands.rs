@@ -96,6 +96,6 @@ pub fn get_linkedin_username() -> CmdResult<Option<String>> {
 }
 
 #[tauri::command]
-pub fn analyze_cv(cv_text: String) -> CmdResult<crate::cv_analysis::Criteria> {
+pub fn analyze_cv(cv_text: String) -> CmdResult<crate::cv_analysis::CvAnalysis> {
     Ok(crate::cv_analysis::analyze(&cv_text))
 }
