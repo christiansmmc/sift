@@ -39,7 +39,7 @@ export default function Jobs() {
         <p className="vagas-subtitle">Revise e aprove candidaturas geradas pelo agente.</p>
       </div>
 
-      <div className="tab-bar" style={{ marginBottom: 20 }}>
+      <div className="tab-bar vagas-tab-bar">
         <button
           className={`tab-btn${tab === "aguardando" ? " active" : ""}`}
           onClick={() => setTab("aguardando")}
@@ -150,7 +150,7 @@ function ApprovedCard({ item }: { item: ReviewItem }) {
 
       {answers.length > 0 && (
         <>
-          <div className="vagas-section-label" style={{ marginTop: 14 }}>
+          <div className="vagas-section-label">
             Respostas
           </div>
           <ul className="vagas-answers-list">
@@ -223,7 +223,7 @@ function ReviewCard({
         <span className="pill pill-awaiting_approval">aguardando</span>
       </div>
 
-      <div className="vagas-section-label" style={{ marginTop: 14 }}>
+      <div className="vagas-section-label">
         Carta de apresentação
       </div>
 
@@ -237,7 +237,7 @@ function ReviewCard({
           />
           {answers.length > 0 && (
             <>
-              <div className="vagas-section-label" style={{ marginTop: 14 }}>
+              <div className="vagas-section-label">
                 Respostas
               </div>
               {answers.map((a, i) => (
@@ -254,7 +254,7 @@ function ReviewCard({
           <div className="cover-view">{letter}</div>
           {answers.length > 0 && (
             <>
-              <div className="vagas-section-label" style={{ marginTop: 14 }}>
+              <div className="vagas-section-label">
                 Respostas
               </div>
               <ul className="vagas-answers-list">
@@ -272,8 +272,8 @@ function ReviewCard({
       )}
 
       <div className="vagas-actions">
-        <button className="btn btn-primary" onClick={approve}>Aprovar</button>
-        <button className="btn btn-danger" onClick={onReject}>Rejeitar</button>
+        <button className="btn vagas-approve" onClick={approve}>Aprovar</button>
+        <button className="btn btn-ghost vagas-reject" onClick={onReject}>Rejeitar</button>
         {editing ? (
           <>
             <button className="btn" onClick={save}>Salvar edição</button>
