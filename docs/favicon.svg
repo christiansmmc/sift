@@ -1,0 +1,11 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="funnel" x1="170" y1="160" x2="342" y2="362" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6f67f7"></stop>
+      <stop offset="1" stop-color="#22d3ee"></stop>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="#0f141a"></rect>
+  <path d="M170 160h172l-66.5 79.4v77.2l-39 23.6V239.4z" fill="url(#funnel)"></path>
+  <circle cx="256" cy="256" r="17" fill="#0f141a"></circle>
+</svg>
