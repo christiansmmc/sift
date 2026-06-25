@@ -4,7 +4,7 @@ import { api } from "../lib/api";
 type Style = "short" | "balanced" | "detailed" | "custom";
 
 const LABELS: Record<Style, string> = {
-  short: "Curta e simples (parece escrita por você)",
+  short: "Curta e simples",
   balanced: "Equilibrada",
   detailed: "Detalhada (formal)",
   custom: "Personalizada",
@@ -38,7 +38,7 @@ export default function Settings() {
       <div className="card">
         <h2>Estilo da carta de apresentação</h2>
         <p className="hint">Como o agente escreve a carta em cada candidatura (modo Revisar).</p>
-        <label className="field">
+        <label className="field" style={{ marginTop: 14 }}>
           Estilo
           <select value={style} onChange={(e) => setStyle(e.target.value as Style)}>
             {(Object.keys(LABELS) as Style[]).map((s) => (
