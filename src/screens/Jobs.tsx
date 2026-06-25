@@ -10,6 +10,10 @@ function openExternal(e: React.MouseEvent, url: string) {
   openUrl(url);
 }
 
+function parseAnswers(json: string): { question: string; answer: string }[] {
+  try { return JSON.parse(json); } catch { return []; }
+}
+
 export default function Jobs() {
   const [review, setReview] = useState<ReviewItem[]>([]);
   const [approved, setApproved] = useState<ReviewItem[]>([]);
@@ -53,6 +57,16 @@ export default function Jobs() {
             <summary>Carta de apresentação</summary>
             <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", background: "var(--surface-2)", padding: "10px", borderRadius: "var(--radius)", marginTop: 8 }}>{r.cover_letter}</pre>
           </details>
+          {parseAnswers(r.answers_json).length > 0 && (
+            <details>
+              <summary>Respostas ({parseAnswers(r.answers_json).length})</summary>
+              <ul style={{ margin: "8px 0 0", paddingLeft: 18 }}>
+                {parseAnswers(r.answers_json).map((a, i) => (
+                  <li key={i} style={{ fontSize: 13 }}><b>{a.question}</b> — {a.answer}</li>
+                ))}
+              </ul>
+            </details>
+          )}
         </div>
       ))}
 
