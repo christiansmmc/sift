@@ -40,6 +40,11 @@
 
 **Deleted files:**
 - `src/theme.css` — absorbed by `src/styles/`.
+- `src/App.css` — legacy/dead (not imported anywhere; duplicates body reset + old terracotta `#D97757` sidebar). Removed in Task 4.
+
+**Other pre-existing CSS to reconcile (not in original inventory):**
+- `src/profile.css` (imported by `Profile.tsx`) — handled in Task 8.
+- `src/onboarding.css` (imported by `Onboarding.tsx`; uses undefined `var(--success)`) — handled in Task 10.
 
 ---
 
@@ -304,6 +309,7 @@ git commit -m "feat(ui): custom titlebar with window controls"
 
 **Files:**
 - Modify: `src/App.tsx` (sidebar markup + theme toggle as switch), `src/styles/chrome.css` (sidebar rules)
+- Delete: `src/App.css` (legacy, not imported — dead terracotta sidebar rules)
 - Reference: `design_handoff_applybot/Applybot.dc.html` sidebar markup/styles
 
 **Interfaces:**
@@ -340,15 +346,18 @@ git commit -m "feat(ui): custom titlebar with window controls"
 
 (If the prototype shows a count badge on a nav item — e.g. Pendências — port that too, reading the markup.)
 
-- [ ] **Step 4: Verify build.** Run: `npx tsc --noEmit`. Expected: no errors.
+- [ ] **Step 4: Delete the dead `src/App.css`.** Confirm it is not imported anywhere (`git grep -n "App.css" src` returns nothing), then `git rm src/App.css`. It holds only legacy `body`/`.sidebar` rules with the old terracotta `#D97757` and is overridden/unused.
 
-- [ ] **Step 5: Verify visually.** Run `npm run tauri dev`. Expected: sidebar matches the prototype — active item has the indigo accent bar, hover states work, and the theme toggle is a 40×22 switch that flips the theme. Check both themes.
+- [ ] **Step 5: Verify build.** Run: `npx tsc --noEmit`. Expected: no errors.
 
-- [ ] **Step 6: Commit.**
+- [ ] **Step 6: Verify visually.** Run `npm run tauri dev`. Expected: sidebar matches the prototype — active item has the indigo accent bar, hover states work, and the theme toggle is a 40×22 switch that flips the theme. Check both themes.
+
+- [ ] **Step 7: Commit.**
 
 ```bash
 git add src/App.tsx src/styles/chrome.css
-git commit -m "feat(ui): sidebar restyle + theme switch"
+git rm src/App.css
+git commit -m "feat(ui): sidebar restyle + theme switch; remove dead App.css"
 ```
 
 ---
@@ -440,17 +449,17 @@ git commit -m "feat(ui): Pendências (pending) restyle"
 ## Task 8: Perfil (Profile) restyle
 
 **Files:**
-- Modify: `src/screens/Profile.tsx`, `src/styles/screens.css`
+- Modify: `src/screens/Profile.tsx`, `src/styles/screens.css`, `src/profile.css` (existing, imported by `Profile.tsx` — holds `.prof`/`.prof-actions` layout)
 - Reference: prototype Perfil screen
 
 **Interfaces:**
 - Consumes: existing `Profile` props/state (profile fields, save handler, CV/answers display). Do not change behavior.
 
-- [ ] **Step 1: Read current `src/screens/Profile.tsx`** and the prototype's Perfil layout (profile cards, fields, saved answers read-only display, save action).
+- [ ] **Step 1: Read current `src/screens/Profile.tsx`**, its `src/profile.css` (`.prof`, `.prof-actions`), and the prototype's Perfil layout (profile cards, fields, saved answers read-only display, save action).
 
 - [ ] **Step 2: Restyle the JSX** to the prototype using Task 2 primitives (`.card`, `.field`, inputs, `.btn-primary`). Preserve all field bindings and the save handler.
 
-- [ ] **Step 3: Add Perfil-specific CSS** to `src/styles/screens.css` as needed.
+- [ ] **Step 3: Reconcile `src/profile.css`.** Move its `.prof`/`.prof-actions` rules into `src/styles/screens.css` (so all screen CSS lives together), update the import in `Profile.tsx` (remove `import "../profile.css"`), and `git rm src/profile.css`. Add any other Perfil-specific CSS to `screens.css`. Match the prototype.
 
 - [ ] **Step 4: Verify build.** Run: `npx tsc --noEmit`. Expected: no errors.
 
@@ -496,8 +505,10 @@ git commit -m "feat(ui): Config (settings) restyle"
 ## Task 10: Onboarding wizard restyle
 
 **Files:**
-- Modify: `src/screens/onboarding/Onboarding.tsx`, `StepCv.tsx`, `StepPersonal.tsx`, `StepCriteria.tsx`, `src/styles/screens.css`
+- Modify: `src/screens/onboarding/Onboarding.tsx`, `StepCv.tsx`, `StepPersonal.tsx`, `StepCriteria.tsx`, `src/styles/screens.css`, `src/onboarding.css` (existing, imported by `Onboarding.tsx`; holds `.onb-*` wizard layout and uses the undefined `var(--success)`)
 - Reference: `design_handoff_applybot/Applybot Setup.dc.html` (the wizard design) + `support.js`
+
+> Note current onboarding files live at `src/screens/Onboarding.tsx` and `src/screens/onboarding/Step*.tsx` (verify exact paths when reading). The import in `Onboarding.tsx` is `import "../onboarding.css"`.
 
 **Interfaces:**
 - Consumes: existing onboarding state machine (current step, next/back, per-step data + completion handler that writes the profile). Do not change the flow logic or what gets persisted.
@@ -508,7 +519,7 @@ git commit -m "feat(ui): Config (settings) restyle"
 
 - [ ] **Step 3: Restyle each step** (`StepCv`, `StepPersonal`, `StepCriteria`) to the prototype using Task 2 primitives, preserving every field binding, validation, and the data each step contributes. Match the prototype's CV upload affordance (PDF/DOCX), the personal fields (name etc.), and the criteria fields.
 
-- [ ] **Step 4: Add wizard-specific CSS** to `src/styles/screens.css` (centered card, stepper, done screen). Match the prototype.
+- [ ] **Step 4: Add wizard-specific CSS** to `src/styles/screens.css` (centered card, stepper, done screen). Match the prototype. **Reconcile `src/onboarding.css`:** move its `.onb-*` rules into `screens.css` updating stale tokens (notably `var(--success)` → `var(--ok)`), remove `import "../onboarding.css"` from `Onboarding.tsx`, and `git rm src/onboarding.css`. After this task, `git grep "var(--success)" src` must return nothing.
 
 - [ ] **Step 5: Verify build.** Run: `npx tsc --noEmit`. Expected: no errors.
 
@@ -532,3 +543,5 @@ git commit -m "feat(ui): onboarding wizard restyle"
 - [ ] Run `npm run tauri dev` and walk every screen in BOTH themes, comparing against the prototype: titlebar controls, sidebar active state + theme switch, Painel run flow, Vagas approve/discard/edit, Pendências resolve, Perfil save, Config persistence, onboarding wizard.
 - [ ] Confirm terracotta `#D97757` no longer appears anywhere: `git grep -i "D97757" src` returns nothing.
 - [ ] Confirm `src/theme.css` is deleted and nothing imports it: `git grep "theme.css" src` returns nothing.
+- [ ] Confirm legacy stylesheets are gone: `src/App.css`, `src/profile.css`, `src/onboarding.css` no longer exist and nothing imports them (`git grep -nE "App\.css|profile\.css|onboarding\.css" src` returns nothing).
+- [ ] Confirm no stale tokens remain: `git grep -nE "var\(--(success|accent-hover)\)" src` returns nothing (the new system uses `--ok`, `--accent`).
