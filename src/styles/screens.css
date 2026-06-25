@@ -884,3 +884,8 @@
   display: flex;
   gap: 11px;
 }
+
+/* Painel controls: zero the .field bottom margin so the inputs bottom-align
+   with the run button + status (which have no label/margin). Specificity
+   (0,2,0) overrides the global label.field margin-bottom:14px (0,1,1). */
+.painel-controls-card .field { margin-bottom: 0; }
