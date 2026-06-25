@@ -80,6 +80,7 @@ function ReviewCard({
     try { return JSON.parse(item.answers_json) as { question: string; answer: string }[]; }
     catch { return []; }
   })();
+  const [editing, setEditing] = useState(false);
   const [letter, setLetter] = useState(item.cover_letter);
   const [answers, setAnswers] = useState(initialAnswers);
   const [status, setStatus] = useState<string | null>(null);
@@ -87,43 +88,77 @@ function ReviewCard({
   function setAnswer(i: number, v: string) {
     setAnswers((a) => a.map((x, idx) => (idx === i ? { ...x, answer: v } : x)));
   }
+  async function persist() {
+    await api.updateApplicationContent(item.application_id, letter, JSON.stringify(answers));
+  }
   async function save() {
     setStatus(null);
-    try {
-      await api.updateApplicationContent(item.application_id, letter, JSON.stringify(answers));
-      setStatus("Edições salvas.");
-    } catch (e) { setStatus(`Erro: ${e}`); }
+    try { await persist(); setEditing(false); setStatus("Edições salvas."); }
+    catch (e) { setStatus(`Erro: ${e}`); }
+  }
+  function cancel() {
+    setLetter(item.cover_letter);
+    setAnswers(initialAnswers);
+    setEditing(false);
+    setStatus(null);
   }
   async function approve() {
-    try {
-      await api.updateApplicationContent(item.application_id, letter, JSON.stringify(answers));
-      onApprove();
-    } catch (e) { setStatus(`Erro: ${e}`); }
+    try { await persist(); onApprove(); }
+    catch (e) { setStatus(`Erro: ${e}`); }
   }
 
   return (
     <div className="card">
-      <strong>{item.job_title}</strong> — {item.company}{" "}
+      <strong>{item.job_title}</strong>{" "}
+      <span style={{ color: "var(--text-muted)" }}>{item.company}</span>{" "}
       <a href={item.url} onClick={(e) => openExternal(e, item.url)}>ver vaga</a>
-      <label className="field" style={{ marginTop: 12 }}>
-        Carta de apresentação
-        <textarea rows={10} value={letter} onChange={(e) => setLetter(e.target.value)} />
-      </label>
-      {answers.length > 0 && (
-        <div>
-          <div className="hint" style={{ marginBottom: 8 }}>Respostas</div>
-          {answers.map((a, i) => (
-            <label className="field" key={i}>
-              {a.question}
-              <input value={a.answer} onChange={(e) => setAnswer(i, e.target.value)} />
-            </label>
-          ))}
-        </div>
+
+      {editing ? (
+        <>
+          <label className="field" style={{ marginTop: 12 }}>
+            Carta de apresentação
+            <textarea rows={10} value={letter} onChange={(e) => setLetter(e.target.value)} />
+          </label>
+          {answers.length > 0 && (
+            <div>
+              <div className="hint" style={{ marginBottom: 8 }}>Respostas</div>
+              {answers.map((a, i) => (
+                <label className="field" key={i}>
+                  {a.question}
+                  <input value={a.answer} onChange={(e) => setAnswer(i, e.target.value)} />
+                </label>
+              ))}
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <div className="hint" style={{ margin: "12px 0 4px" }}>Carta de apresentação</div>
+          <div className="cover-view">{letter}</div>
+          {answers.length > 0 && (
+            <div style={{ marginTop: 10 }}>
+              <div className="hint" style={{ marginBottom: 4 }}>Respostas</div>
+              <ul style={{ margin: 0, paddingLeft: 18 }}>
+                {answers.map((a, i) => (
+                  <li key={i} style={{ fontSize: 13 }}><b>{a.question}</b> — {a.answer}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
       )}
-      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+
+      <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 12 }}>
         <button className="btn btn-primary" onClick={approve}>Aprovar</button>
         <button className="btn btn-ghost" onClick={onReject}>Rejeitar</button>
-        <button className="btn" onClick={save}>Salvar edição</button>
+        {editing ? (
+          <>
+            <button className="btn" onClick={save}>Salvar edição</button>
+            <button className="btn btn-ghost" onClick={cancel}>Cancelar</button>
+          </>
+        ) : (
+          <button className="btn" onClick={() => setEditing(true)}>✏️ Editar</button>
+        )}
         {status && <span className="hint">{status}</span>}
       </div>
     </div>

@@ -73,3 +73,14 @@ input:disabled { background: var(--surface-2); color: var(--text-muted); }
 .sidebar .theme-toggle { background: transparent; border: 1px solid var(--border); color: var(--text-muted); border-radius: var(--radius); padding: 8px; cursor: pointer; font-size: 14px; }
 .content { flex: 1; padding: 28px 32px; overflow-y: auto; max-height: 100vh; }
 .loading { padding: 24px; color: var(--text-muted); }
+
+/* Read-only cover letter view (toggled into a textarea when editing). */
+.cover-view { white-space: pre-wrap; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; max-height: 220px; overflow-y: auto; font-size: 13px; line-height: 1.5; }
+
+/* Themed scrollbars (WebView2/Chromium) so they match the app instead of the OS default. */
+* { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; border: 2px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+::-webkit-scrollbar-corner { background: transparent; }
