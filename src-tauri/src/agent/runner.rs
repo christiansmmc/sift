@@ -235,7 +235,15 @@ pub fn start(
         let conn = db.lock().map_err(|e| e.to_string())?;
         crate::db::answers::list(&conn).map_err(|e| e.to_string())?
     };
-    let prompt = crate::agent::prompt::build_system_prompt(&profile, &answers, &mode, batch_size);
+    let (style, custom) = {
+        let conn = db.lock().map_err(|e| e.to_string())?;
+        (
+            crate::db::settings::get_or(&conn, "cover_letter_style", "balanced").map_err(|e| e.to_string())?,
+            crate::db::settings::get(&conn, "cover_letter_custom").map_err(|e| e.to_string())?.unwrap_or_default(),
+        )
+    };
+    let cover_letter = crate::agent::prompt::cover_letter_instruction(&style, &custom);
+    let prompt = crate::agent::prompt::build_system_prompt(&profile, &answers, &cover_letter, &mode, batch_size);
     spawn_agent(db, app, prompt)
 }
 

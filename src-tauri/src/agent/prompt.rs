@@ -19,7 +19,24 @@ APPLYBOT_JOB with cover_letter and answers filled in. Do NOT submit — the user
     }
 }
 
-pub fn build_system_prompt(profile: &Profile, answers: &[(String, String)], mode: &str, batch_size: u32) -> String {
+pub fn cover_letter_instruction(style: &str, custom: &str) -> String {
+    match style {
+        "short" => "Keep the cover letter SHORT and simple: at most 2 short paragraphs, first person, casual but professional, as if the candidate wrote it quickly themselves. No clichés, no formal template, plain prose.".to_string(),
+        "detailed" => "Write a detailed, specific cover letter: exactly 4 short paragraphs, a concrete company-specific hook, quantified proof of achievements, no clichés ('passionate', 'results-driven'), plain prose.".to_string(),
+        "custom" => {
+            let c = custom.trim();
+            if c.is_empty() {
+                // fall back to balanced if custom is selected but empty
+                "A balanced cover letter: 3 short paragraphs, specific to the company, one quantified proof. Professional and natural.".to_string()
+            } else {
+                format!("Follow the candidate's own instructions exactly: {c}")
+            }
+        }
+        _ => "A balanced cover letter: 3 short paragraphs, specific to the company, one quantified proof. Professional and natural.".to_string(),
+    }
+}
+
+pub fn build_system_prompt(profile: &Profile, answers: &[(String, String)], cover_letter: &str, mode: &str, batch_size: u32) -> String {
     let profile_block = format!(
         "Name: {}\nEmail: {}\nPhone: {}\nLocation: {}\n\nResume:\n{}",
         profile.full_name, profile.email, profile.phone, profile.location, profile.cv_text
@@ -51,6 +68,7 @@ pub fn build_system_prompt(profile: &Profile, answers: &[(String, String)], mode
         .replace("{{CRITERIA}}", &criteria_block)
         .replace("{{SCREENING}}", &screening_block)
         .replace("{{ANSWER_BANK}}", &answer_bank)
+        .replace("{{COVER_LETTER_STYLE}}", cover_letter)
 }
 
 pub fn build_submit_prompt(items: &[crate::db::applications::SubmitItem]) -> String {
@@ -110,7 +128,8 @@ mod tests {
         let answers = vec![
             ("Years of Rust?".to_string(), "8".to_string()),
         ];
-        let out = build_system_prompt(&p, &answers, "revisar", 10);
+        let cl = cover_letter_instruction("balanced", "");
+        let out = build_system_prompt(&p, &answers, &cl, "revisar", 10);
         assert!(out.contains("MODE: REVISAR"));
         assert!(out.contains("Ada"));
         assert!(out.contains("8 years backend"));
@@ -118,7 +137,7 @@ mod tests {
         assert!(out.contains("Years of Rust?"));
         assert!(out.contains("A: 8"));
         assert!(!out.contains("{{")); // no leftover placeholders
-        let scan = build_system_prompt(&p, &answers, "scan", 5);
+        let scan = build_system_prompt(&p, &answers, &cl, "scan", 5);
         assert!(scan.contains("MODE: SCAN"));
     }
 
@@ -130,8 +149,18 @@ mod tests {
             criteria_json: "{}".into(),
             ..Default::default()
         };
-        let out = build_system_prompt(&p, &[], "revisar", 5);
+        let cl = cover_letter_instruction("balanced", "");
+        let out = build_system_prompt(&p, &[], &cl, "revisar", 5);
         assert!(out.contains("(none saved yet)"));
         assert!(!out.contains("{{"));
+    }
+
+    #[test]
+    fn cover_letter_instruction_variants() {
+        assert!(cover_letter_instruction("short", "").contains("SHORT"));
+        assert!(cover_letter_instruction("detailed", "").contains("4 short paragraphs"));
+        assert!(cover_letter_instruction("custom", "use British English").contains("British English"));
+        assert!(cover_letter_instruction("custom", "").contains("balanced")); // empty custom falls back
+        assert!(cover_letter_instruction("anything", "").contains("balanced"));
     }
 }

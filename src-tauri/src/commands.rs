@@ -212,6 +212,18 @@ pub fn list_approved(state: State<AppState>) -> CmdResult<Vec<applications::Revi
 }
 
 #[tauri::command]
+pub fn get_setting(state: State<AppState>, key: String) -> CmdResult<Option<String>> {
+    let conn = state.db.lock().map_err(err)?;
+    crate::db::settings::get(&conn, &key).map_err(err)
+}
+
+#[tauri::command]
+pub fn set_setting(state: State<AppState>, key: String, value: String) -> CmdResult<()> {
+    let conn = state.db.lock().map_err(err)?;
+    crate::db::settings::set(&conn, &key, &value).map_err(err)
+}
+
+#[tauri::command]
 pub fn submit_approved(state: State<AppState>, app: tauri::AppHandle) -> CmdResult<()> {
     let mut slot = state.agent.lock().map_err(err)?;
     if slot.as_ref().map(|h| h.is_running()).unwrap_or(false) {

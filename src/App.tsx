@@ -7,14 +7,16 @@ import Dashboard from "./screens/Dashboard";
 import Jobs from "./screens/Jobs";
 import Pending from "./screens/Pending";
 import Profile from "./screens/Profile";
+import Settings from "./screens/Settings";
 
-type Screen = "dashboard" | "jobs" | "pending" | "profile";
+type Screen = "dashboard" | "jobs" | "pending" | "profile" | "settings";
 
 const NAV: { key: Screen; label: string }[] = [
   { key: "dashboard", label: "Painel" },
   { key: "jobs", label: "Vagas" },
   { key: "pending", label: "Pendências" },
   { key: "profile", label: "Perfil" },
+  { key: "settings", label: "Configurações" },
 ];
 
 export default function App() {
@@ -118,6 +120,7 @@ export default function App() {
         {screen === "jobs" && <Jobs />}
         {screen === "pending" && <Pending />}
         {screen === "profile" && <Profile />}
+        {screen === "settings" && <Settings />}
       </main>
     </div>
   );
