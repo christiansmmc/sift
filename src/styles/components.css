@@ -40,7 +40,6 @@
 .btn-primary {
   padding: 10px 20px;
   background: var(--accent);
-  border-color: var(--accent);
   color: #fff;
   font-weight: 600;
   border: none;
@@ -210,7 +209,7 @@ textarea.editing {
   font-weight: 500;
   background: transparent;
   color: var(--text-muted);
-  transition: all .12s;
+  transition: background .12s, color .12s, box-shadow .12s;
 }
 .tab-btn.active {
   font-weight: 600;

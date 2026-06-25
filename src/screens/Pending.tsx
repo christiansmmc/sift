@@ -65,7 +65,7 @@ export default function Pending() {
       </div>
       {status && <p className="hint">{status}</p>}
       {items.map((p) => (
-        <div key={p.id} className="card pend-card">
+        <div key={p.id} className="card">
           <div className="pend-card-pill">
             <span className={`pill pill-${p.category}`}>{labelFor(p.category)}</span>
           </div>

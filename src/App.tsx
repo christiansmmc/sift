@@ -97,7 +97,7 @@ export default function App() {
       <div className="app">
         <nav className="sidebar">
           <div className="brand">apply<span>bot</span></div>
-          <nav>
+          <div className="sidebar-links">
             {NAV.map((n) => (
               <button
                 key={n.key}
@@ -105,9 +105,12 @@ export default function App() {
                 onClick={() => setScreen(n.key)}
               >
                 {n.label}
+                {n.key === "pending" && (counts?.pending ?? 0) > 0 && (
+                  <span className="nav-badge">{counts!.pending}</span>
+                )}
               </button>
             ))}
-          </nav>
+          </div>
           <div className="theme-row">
             <span>{theme === "dark" ? "Tema escuro" : "Tema claro"}</span>
             <button
