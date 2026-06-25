@@ -14,3 +14,14 @@
 .tb-btn { width: 46px; height: 100%; border: none; background: transparent; color: var(--titlebar-text); cursor: pointer; font-size: 11px; display: grid; place-items: center; }
 .tb-btn:hover { background: var(--surface-2); }
 .tb-close:hover { background: var(--danger); color: #fff; }
+
+/* ── Sidebar ── */
+.sidebar { width: 208px; flex: none; background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 14px 12px; gap: 4px; }
+.sidebar .brand { font-weight: 700; font-size: 15px; color: var(--text); padding: 4px 12px 14px; }
+.sidebar .brand span { color: var(--accent); }
+.sidebar nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.sidebar button.navlink { position: relative; background: transparent; color: var(--text-muted); border: none; text-align: left; padding: 9px 12px; border-radius: var(--radius); cursor: pointer; font: inherit; font-size: 13.5px; width: 100%; }
+.sidebar button.navlink:hover { background: var(--surface-2); color: var(--text); }
+.sidebar button.navlink.active { background: var(--surface-2); color: var(--text); font-weight: 600; }
+.sidebar button.navlink.active::before { content: ""; position: absolute; left: -12px; top: 7px; bottom: 7px; width: 3px; border-radius: 0 3px 3px 0; background: var(--accent); }
+.sidebar .theme-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; color: var(--text-muted); font-size: 12.5px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); }

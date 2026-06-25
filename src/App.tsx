@@ -108,9 +108,14 @@ export default function App() {
               </button>
             ))}
           </nav>
-          <button className="theme-toggle" onClick={() => setThemeState(toggleTheme())}>
-            {theme === "dark" ? "☀️  Tema claro" : "🌙  Tema escuro"}
-          </button>
+          <div className="theme-row">
+            <span>{theme === "dark" ? "Tema escuro" : "Tema claro"}</span>
+            <button
+              className={`switch${theme === "dark" ? " on" : ""}`}
+              onClick={() => setThemeState(toggleTheme())}
+              aria-label="Alternar tema"
+            />
+          </div>
         </nav>
         <main className="content">
           {screen === "dashboard" && (

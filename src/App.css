@@ -1,9 +1,0 @@
-* { box-sizing: border-box; }
-body { margin: 0; font-family: system-ui, sans-serif; }
-.app { display: flex; min-height: 100vh; }
-.sidebar { width: 180px; background: #1a1a1a; display: flex; flex-direction: column; padding: 12px; gap: 4px; }
-.sidebar button { background: transparent; color: #ccc; border: none; text-align: left; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; }
-.sidebar button:hover { background: #2a2a2a; color: #fff; }
-.sidebar button.active { background: #D97757; color: #fff; }
-.content { flex: 1; padding: 24px; }
-.loading { padding: 24px; }
