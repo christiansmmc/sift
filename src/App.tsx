@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "./lib/api";
+import { getTheme, toggleTheme, type Theme } from "./lib/theme";
 import Onboarding from "./screens/Onboarding";
 import Dashboard from "./screens/Dashboard";
 import Jobs from "./screens/Jobs";
@@ -19,6 +20,7 @@ const NAV: { key: Screen; label: string }[] = [
 export default function App() {
   const [onboarded, setOnboarded] = useState<boolean | null>(null);
   const [screen, setScreen] = useState<Screen>("dashboard");
+  const [theme, setThemeState] = useState<Theme>(getTheme());
 
   useEffect(() => {
     api.getOnboardingStatus().then(setOnboarded).catch(() => setOnboarded(false));
@@ -30,15 +32,17 @@ export default function App() {
   return (
     <div className="app">
       <nav className="sidebar">
-        {NAV.map((n) => (
-          <button
-            key={n.key}
-            className={screen === n.key ? "active" : ""}
-            onClick={() => setScreen(n.key)}
-          >
-            {n.label}
-          </button>
-        ))}
+        <div className="brand">apply<span>bot</span></div>
+        <nav>
+          {NAV.map((n) => (
+            <button key={n.key} className={`navlink ${screen === n.key ? "active" : ""}`} onClick={() => setScreen(n.key)}>
+              {n.label}
+            </button>
+          ))}
+        </nav>
+        <button className="theme-toggle" onClick={() => setThemeState(toggleTheme())}>
+          {theme === "dark" ? "☀️  Tema claro" : "🌙  Tema escuro"}
+        </button>
       </nav>
       <main className="content">
         {screen === "dashboard" && <Dashboard />}
