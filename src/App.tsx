@@ -57,6 +57,12 @@ export default function App() {
     };
   }, [onboarded]);
 
+  // Refresh whenever the Painel becomes active, so counters and the
+  // "Enviar aprovadas" button reflect actions taken on other tabs (e.g. approving).
+  useEffect(() => {
+    if (onboarded && screen === "dashboard") refreshDashboard();
+  }, [screen, onboarded]);
+
   async function onStart() {
     setError(null);
     setFeed([]);
