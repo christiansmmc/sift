@@ -400,6 +400,7 @@
 }
 .vagas-approve:hover {
   filter: brightness(1.06);
+  background: var(--ok);
 }
 
 /* ── Pendências (Pending) ─────────────────────────────────────────────── */
