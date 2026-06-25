@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { api } from "./lib/api";
+import { api, onAgentEvent, onAgentStatus } from "./lib/api";
 import { getTheme, toggleTheme, type Theme } from "./lib/theme";
+import type { DashboardCounts } from "./types";
 import Onboarding from "./screens/Onboarding";
 import Dashboard from "./screens/Dashboard";
 import Jobs from "./screens/Jobs";
 import Pending from "./screens/Pending";
 import Profile from "./screens/Profile";
-import "./App.css";
 
 type Screen = "dashboard" | "jobs" | "pending" | "profile";
 
@@ -22,9 +22,51 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>("dashboard");
   const [theme, setThemeState] = useState<Theme>(getTheme());
 
+  // Agent/dashboard state lives here — App is always mounted, so it survives
+  // tab switches (the Painel is conditionally rendered) and the live feed keeps
+  // accumulating even while the user is on another screen.
+  const [counts, setCounts] = useState<DashboardCounts | null>(null);
+  const [running, setRunning] = useState(false);
+  const [mode, setMode] = useState<"scan" | "revisar">("revisar");
+  const [batch, setBatch] = useState(10);
+  const [feed, setFeed] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     api.getOnboardingStatus().then(setOnboarded).catch(() => setOnboarded(false));
   }, []);
+
+  async function refreshDashboard() {
+    setCounts(await api.dashboardCounts());
+    setRunning(await api.agentRunning());
+  }
+
+  // Subscribe once (after onboarding) for the app's lifetime.
+  useEffect(() => {
+    if (!onboarded) return;
+    refreshDashboard();
+    const un = onAgentEvent(() => refreshDashboard());
+    const unStatus = onAgentStatus((t) => setFeed((f) => [...f, t].slice(-50)));
+    return () => {
+      un.then((f) => f());
+      unStatus.then((f) => f());
+    };
+  }, [onboarded]);
+
+  async function onStart() {
+    setError(null);
+    setFeed([]);
+    try {
+      await api.startSearchBatch(mode, batch);
+      setRunning(true);
+    } catch (e) {
+      setError(String(e));
+    }
+  }
+  async function onStop() {
+    await api.stopAgent();
+    setRunning(false);
+  }
 
   if (onboarded === null) return <div className="loading">Carregando…</div>;
   if (!onboarded) return <Onboarding onDone={() => setOnboarded(true)} />;
@@ -35,7 +77,11 @@ export default function App() {
         <div className="brand">apply<span>bot</span></div>
         <nav>
           {NAV.map((n) => (
-            <button key={n.key} className={`navlink ${screen === n.key ? "active" : ""}`} onClick={() => setScreen(n.key)}>
+            <button
+              key={n.key}
+              className={`navlink ${screen === n.key ? "active" : ""}`}
+              onClick={() => setScreen(n.key)}
+            >
               {n.label}
             </button>
           ))}
@@ -45,7 +91,20 @@ export default function App() {
         </button>
       </nav>
       <main className="content">
-        {screen === "dashboard" && <Dashboard />}
+        {screen === "dashboard" && (
+          <Dashboard
+            counts={counts}
+            running={running}
+            mode={mode}
+            batch={batch}
+            feed={feed}
+            error={error}
+            setMode={setMode}
+            setBatch={setBatch}
+            onStart={onStart}
+            onStop={onStop}
+          />
+        )}
         {screen === "jobs" && <Jobs />}
         {screen === "pending" && <Pending />}
         {screen === "profile" && <Profile />}
