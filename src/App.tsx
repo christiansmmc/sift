@@ -105,8 +105,8 @@ export default function App() {
                 onClick={() => setScreen(n.key)}
               >
                 {n.label}
-                {n.key === "pending" && (counts?.pending ?? 0) > 0 && (
-                  <span className="nav-badge">{counts!.pending}</span>
+                {n.key === "jobs" && (counts?.awaiting_approval ?? 0) > 0 && (
+                  <span className="nav-badge">{counts!.awaiting_approval}</span>
                 )}
               </button>
             ))}

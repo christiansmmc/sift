@@ -26,5 +26,5 @@
 .sidebar button.navlink.active { background: var(--surface-2); color: var(--text); font-weight: 600; }
 .sidebar button.navlink.active::before { content: ""; position: absolute; left: -12px; top: 7px; bottom: 7px; width: 3px; border-radius: 0 3px 3px 0; background: var(--accent); }
 .sidebar .theme-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; color: var(--text-muted); font-size: 12.5px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); }
-.nav-badge { margin-left: auto; font-family: "Geist Mono", monospace; font-size: 11px; font-weight: 600; min-width: 17px; height: 17px; padding: 0 5px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--text-faint) 20%, transparent); color: var(--text-muted); }
+.nav-badge { margin-left: auto; font-family: "Geist Mono", monospace; font-size: 11px; font-weight: 600; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--text-faint) 20%, transparent); color: var(--text-muted); }
 .navlink.active .nav-badge { background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--accent); }
