@@ -29,6 +29,7 @@ export default function App() {
   // accumulating even while the user is on another screen.
   const [counts, setCounts] = useState<DashboardCounts | null>(null);
   const [running, setRunning] = useState(false);
+  const [runKind, setRunKind] = useState<"search" | "submit">("search");
   const [mode, setMode] = useState<"scan" | "revisar">("revisar");
   const [batch, setBatch] = useState(10);
   const [feed, setFeed] = useState<string[]>([]);
@@ -64,6 +65,7 @@ export default function App() {
   }, [screen, onboarded]);
 
   async function onStart() {
+    setRunKind("search");
     setError(null);
     setFeed([]);
     try {
@@ -78,6 +80,7 @@ export default function App() {
     setRunning(false);
   }
   async function onSubmitApproved() {
+    setRunKind("submit");
     setError(null);
     setFeed([]);
     try { await api.submitApproved(); setRunning(true); }
@@ -111,6 +114,7 @@ export default function App() {
           <Dashboard
             counts={counts}
             running={running}
+            runKind={runKind}
             mode={mode}
             batch={batch}
             feed={feed}

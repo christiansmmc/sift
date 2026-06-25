@@ -253,7 +253,11 @@ pub fn start_submit(
     app: tauri::AppHandle,
     items: Vec<crate::db::applications::SubmitItem>,
 ) -> Result<AgentHandle, String> {
-    let prompt = crate::agent::prompt::build_submit_prompt(&items);
+    let follow_company = {
+        let conn = db.lock().map_err(|e| e.to_string())?;
+        crate::db::settings::get_or(&conn, "follow_company", "false").map_err(|e| e.to_string())? == "true"
+    };
+    let prompt = crate::agent::prompt::build_submit_prompt(&items, follow_company);
     spawn_agent(db, app, prompt)
 }
 

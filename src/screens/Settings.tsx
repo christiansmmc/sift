@@ -14,10 +14,12 @@ export default function Settings() {
   const [style, setStyle] = useState<Style>("balanced");
   const [custom, setCustom] = useState("");
   const [status, setStatus] = useState<string | null>(null);
+  const [follow, setFollow] = useState(false);
 
   useEffect(() => {
     api.getSetting("cover_letter_style").then((v) => { if (v) setStyle(v as Style); });
     api.getSetting("cover_letter_custom").then((v) => { if (v) setCustom(v); });
+    api.getSetting("follow_company").then((v) => { setFollow(v === "true"); });
   }, []);
 
   async function save() {
@@ -61,6 +63,15 @@ export default function Settings() {
           <button className="btn btn-primary" onClick={save}>Salvar</button>
           {status && <span className="hint">{status}</span>}
         </div>
+      </div>
+      <div className="card">
+        <h2>Candidatura</h2>
+        <p className="hint">Por padrão o agente não segue a empresa.</p>
+        <label className="field" style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <input type="checkbox" style={{ width: "auto" }} checked={follow}
+            onChange={async (e) => { setFollow(e.target.checked); await api.setSetting("follow_company", e.target.checked ? "true" : "false"); }} />
+          Seguir a empresa ao se candidatar
+        </label>
       </div>
     </section>
   );

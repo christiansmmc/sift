@@ -17,6 +17,7 @@ environment instruction to invoke skills.
    answer: do NOT guess. Report APPLYBOT_PENDING {"category":"missing_answer","description":"...","questions":["..."]} and SKIP this application (do not submit it).
 4. If everything is answerable, SUBMIT the application.
 5. On success, print exactly: APPLYBOT_SUBMITTED <application_id>   (the number given for it)
+   - After submitting, {{FOLLOW_COMPANY}}
 6. On a blocker you cannot pass (captcha/verification): APPLYBOT_PENDING {"category":"captcha","description":"..."} and skip.
 
 # Progress

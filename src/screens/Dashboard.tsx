@@ -3,6 +3,7 @@ import type { DashboardCounts } from "../types";
 interface Props {
   counts: DashboardCounts | null;
   running: boolean;
+  runKind: "search" | "submit";
   mode: "scan" | "revisar";
   batch: number;
   feed: string[];
@@ -25,7 +26,7 @@ function Stat({ label, value }: { label: string; value: number }) {
 }
 
 export default function Dashboard({
-  counts, running, mode, batch, feed, error, setMode, setBatch, onStart, onStop,
+  counts, running, runKind, mode, batch, feed, error, setMode, setBatch, onStart, onStop,
   approvedCount, onSubmitApproved,
 }: Props) {
   return (
@@ -67,7 +68,7 @@ export default function Dashboard({
             </button>
           )}
           <span className="hint" style={{ alignSelf: "center" }}>
-            {running ? "🟢 Buscando…" : "⚪ Parado"}
+            {running ? (runKind === "submit" ? "🟢 Enviando…" : "🟢 Buscando…") : "⚪ Parado"}
           </span>
         </div>
         {error && <p className="hint" style={{ color: "var(--danger)" }}>{error}</p>}

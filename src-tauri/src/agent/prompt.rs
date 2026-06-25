@@ -71,7 +71,7 @@ pub fn build_system_prompt(profile: &Profile, answers: &[(String, String)], cove
         .replace("{{COVER_LETTER_STYLE}}", cover_letter)
 }
 
-pub fn build_submit_prompt(items: &[crate::db::applications::SubmitItem]) -> String {
+pub fn build_submit_prompt(items: &[crate::db::applications::SubmitItem], follow_company: bool) -> String {
     let block = if items.is_empty() {
         "(none)".to_string()
     } else {
@@ -86,7 +86,14 @@ pub fn build_submit_prompt(items: &[crate::db::applications::SubmitItem]) -> Str
             .collect::<Vec<_>>()
             .join("\n\n")
     };
-    SUBMIT_TEMPLATE.replace("{{APPLICATIONS}}", &block)
+    let follow = if follow_company {
+        "if LinkedIn offers to follow the company, you may follow it."
+    } else {
+        "if LinkedIn offers to follow the company, do NOT follow it — decline or uncheck that option."
+    };
+    SUBMIT_TEMPLATE
+        .replace("{{APPLICATIONS}}", &block)
+        .replace("{{FOLLOW_COMPANY}}", follow)
 }
 
 #[cfg(test)]
@@ -102,11 +109,15 @@ mod submit_tests {
             cover_letter: "Dear Acme".into(),
             answers_json: r#"[{"question":"Q","answer":"A"}]"#.into(),
         }];
-        let out = build_submit_prompt(&items);
+        let out = build_submit_prompt(&items, false);
         assert!(out.contains("Application id 7"));
         assert!(out.contains("linkedin.com/jobs/7"));
         assert!(out.contains("APPLYBOT_SUBMITTED"));
         assert!(!out.contains("{{"));
+        assert!(out.contains("do NOT follow"));
+
+        let out_follow = build_submit_prompt(&items, true);
+        assert!(out_follow.contains("you may follow"));
     }
 }
 
