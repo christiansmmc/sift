@@ -25,10 +25,6 @@ export default function Jobs() {
   async function approve(id: number) { await api.approveApplication(id); await refresh(); }
   async function reject(id: number) { await api.rejectApplication(id); await refresh(); }
 
-  function answers(json: string): { question: string; answer: string }[] {
-    try { return JSON.parse(json); } catch { return []; }
-  }
-
   return (
     <section>
       <h1>Vagas</h1>
@@ -36,27 +32,12 @@ export default function Jobs() {
       <h2>Aguardando aprovação ({review.length})</h2>
       {review.length === 0 && <p className="hint">Nada para revisar agora.</p>}
       {review.map((r) => (
-        <div key={r.application_id} className="card">
-          <div>
-            <strong>{r.job_title}</strong>
-            {" "}<span style={{ color: "var(--text-muted)" }}>{r.company}</span>
-            {" "}<a href={r.url} onClick={(e) => openExternal(e, r.url)}>ver vaga</a>
-          </div>
-          <details style={{ margin: "8px 0" }}>
-            <summary>Carta de apresentação</summary>
-            <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", background: "var(--surface-2)", padding: "10px", borderRadius: "var(--radius)", marginTop: 8 }}>{r.cover_letter}</pre>
-          </details>
-          {answers(r.answers_json).length > 0 && (
-            <details>
-              <summary>Respostas ({answers(r.answers_json).length})</summary>
-              <ul>{answers(r.answers_json).map((a, i) => <li key={i}><b>{a.question}</b> — {a.answer}</li>)}</ul>
-            </details>
-          )}
-          <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-            <button className="btn btn-primary" onClick={() => approve(r.application_id)}>Aprovar</button>
-            <button className="btn btn-ghost" onClick={() => reject(r.application_id)}>Rejeitar</button>
-          </div>
-        </div>
+        <ReviewCard
+          key={r.application_id}
+          item={r}
+          onApprove={() => approve(r.application_id)}
+          onReject={() => reject(r.application_id)}
+        />
       ))}
 
       <h2>Aprovadas (aguardando envio) ({approved.length})</h2>
@@ -85,5 +66,66 @@ export default function Jobs() {
         </div>
       ))}
     </section>
+  );
+}
+
+function ReviewCard({
+  item, onApprove, onReject,
+}: {
+  item: ReviewItem;
+  onApprove: () => void;
+  onReject: () => void;
+}) {
+  const initialAnswers = (() => {
+    try { return JSON.parse(item.answers_json) as { question: string; answer: string }[]; }
+    catch { return []; }
+  })();
+  const [letter, setLetter] = useState(item.cover_letter);
+  const [answers, setAnswers] = useState(initialAnswers);
+  const [status, setStatus] = useState<string | null>(null);
+
+  function setAnswer(i: number, v: string) {
+    setAnswers((a) => a.map((x, idx) => (idx === i ? { ...x, answer: v } : x)));
+  }
+  async function save() {
+    setStatus(null);
+    try {
+      await api.updateApplicationContent(item.application_id, letter, JSON.stringify(answers));
+      setStatus("Edições salvas.");
+    } catch (e) { setStatus(`Erro: ${e}`); }
+  }
+  async function approve() {
+    try {
+      await api.updateApplicationContent(item.application_id, letter, JSON.stringify(answers));
+      onApprove();
+    } catch (e) { setStatus(`Erro: ${e}`); }
+  }
+
+  return (
+    <div className="card">
+      <strong>{item.job_title}</strong> — {item.company}{" "}
+      <a href={item.url} onClick={(e) => openExternal(e, item.url)}>ver vaga</a>
+      <label className="field" style={{ marginTop: 12 }}>
+        Carta de apresentação
+        <textarea rows={10} value={letter} onChange={(e) => setLetter(e.target.value)} />
+      </label>
+      {answers.length > 0 && (
+        <div>
+          <div className="hint" style={{ marginBottom: 8 }}>Respostas</div>
+          {answers.map((a, i) => (
+            <label className="field" key={i}>
+              {a.question}
+              <input value={a.answer} onChange={(e) => setAnswer(i, e.target.value)} />
+            </label>
+          ))}
+        </div>
+      )}
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <button className="btn btn-primary" onClick={approve}>Aprovar</button>
+        <button className="btn btn-ghost" onClick={onReject}>Rejeitar</button>
+        <button className="btn" onClick={save}>Salvar edição</button>
+        {status && <span className="hint">{status}</span>}
+      </div>
+    </div>
   );
 }
