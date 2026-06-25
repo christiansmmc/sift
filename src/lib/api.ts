@@ -34,6 +34,8 @@ export const api = {
   submitApproved: () => invoke<void>("submit_approved"),
   countApproved: () => invoke<number>("count_approved"),
   listApproved: () => invoke<ReviewItem[]>("list_approved"),
+  updateApplicationContent: (id: number, coverLetter: string, answersJson: string) =>
+    invoke<void>("update_application_content", { id, coverLetter, answersJson }),
   getSetting: (key: string) => invoke<string | null>("get_setting", { key }),
   setSetting: (key: string, value: string) => invoke<void>("set_setting", { key, value }),
 };

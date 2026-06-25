@@ -153,6 +153,20 @@ pub fn approved_for_submit(conn: &Connection) -> rusqlite::Result<Vec<SubmitItem
     rows.collect()
 }
 
+/// Overwrite the generated content of an application (user edits before approval).
+pub fn update_content(
+    conn: &Connection,
+    id: i64,
+    cover_letter: &str,
+    answers_json: &str,
+) -> rusqlite::Result<()> {
+    conn.execute(
+        "UPDATE applications SET cover_letter = ?2, answers_json = ?3 WHERE id = ?1",
+        (id, cover_letter, answers_json),
+    )?;
+    Ok(())
+}
+
 pub fn count_approved(conn: &Connection) -> rusqlite::Result<i64> {
     conn.query_row("SELECT COUNT(*) FROM applications WHERE status='approved'", [], |r| r.get(0))
 }
@@ -229,6 +243,17 @@ mod tests {
         let app = &list(&conn).unwrap()[0];
         assert_eq!(app.status, "submitted");
         assert!(app.submitted_at.is_some());
+    }
+
+    #[test]
+    fn update_content_overwrites_letter_and_answers() {
+        let conn = open_in_memory();
+        let j = jobs::insert(&conn, &jobs::NewJob{title:"D".into(),company:"A".into(),url:"u1".into(),source:"linkedin".into()}).unwrap();
+        let id = create_with_content(&conn, j, "old", "[]").unwrap();
+        update_content(&conn, id, "new letter", r#"[{"question":"Q","answer":"A"}]"#).unwrap();
+        let q = review_queue(&conn).unwrap();
+        assert_eq!(q[0].cover_letter, "new letter");
+        assert!(q[0].answers_json.contains("\"answer\":\"A\""));
     }
 
     #[test]
