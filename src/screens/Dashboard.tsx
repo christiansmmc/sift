@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api, onAgentEvent } from "../lib/api";
+import { api, onAgentEvent, onAgentStatus } from "../lib/api";
 import type { DashboardCounts } from "../types";
 
 export default function Dashboard() {
@@ -8,6 +8,7 @@ export default function Dashboard() {
   const [batch, setBatch] = useState(10);
   const [mode, setMode] = useState<"scan" | "revisar">("revisar");
   const [error, setError] = useState<string | null>(null);
+  const [feed, setFeed] = useState<string[]>([]);
 
   async function refresh() {
     setCounts(await api.dashboardCounts());
@@ -17,11 +18,16 @@ export default function Dashboard() {
   useEffect(() => {
     refresh();
     const un = onAgentEvent(() => refresh());
-    return () => { un.then((f) => f()); };
+    const unStatus = onAgentStatus((t) => setFeed((f) => [...f, t].slice(-50)));
+    return () => {
+      un.then((f) => f());
+      unStatus.then((f) => f());
+    };
   }, []);
 
   async function start() {
     setError(null);
+    setFeed([]);
     try { await api.startSearchBatch(mode, batch); setRunning(true); }
     catch (e) { setError(String(e)); }
   }
@@ -74,6 +80,20 @@ export default function Dashboard() {
           <div className="card" style={{ flex: "1 1 120px", textAlign: "center" }}>
             <div style={{ fontSize: 28, fontWeight: 700 }}>{counts.pending}</div>
             <div className="hint">Pendências</div>
+          </div>
+        </div>
+      )}
+
+      {feed.length > 0 && (
+        <div className="card" style={{ marginTop: 12 }}>
+          <div style={{ fontWeight: 600, marginBottom: 6 }}>Atividade</div>
+          <div style={{ maxHeight: 200, overflowY: "auto", display: "flex", flexDirection: "column", gap: 2 }}>
+            {feed.map((line, i) => (
+              <div key={i} style={{ fontSize: 13 }}>
+                <span style={{ color: "var(--accent)" }}>›</span>{" "}
+                <span className="hint">{line}</span>
+              </div>
+            ))}
           </div>
         </div>
       )}

@@ -44,3 +44,7 @@ export async function pickResumeFile(): Promise<string | null> {
 export function onAgentEvent(cb: (payload: string) => void) {
   return listen<string>("agent://event", (e) => cb(e.payload));
 }
+
+export function onAgentStatus(cb: (text: string) => void) {
+  return listen<string>("agent://status", (e) => cb(e.payload));
+}
