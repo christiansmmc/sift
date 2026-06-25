@@ -457,6 +457,108 @@
   line-height: 1.55;
 }
 
+/* ── Config (Settings) ─────────────────────────────────────────────────── */
+
+/* Outer flex column keeps gap uniform and collapses card margins */
+.config {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.config .card {
+  margin: 0;
+}
+
+/* Page header */
+.config-header {
+  margin-bottom: 20px;
+}
+.config-title {
+  margin: 0;
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: -.5px;
+}
+.config-subtitle {
+  margin: 5px 0 0;
+  font-size: 13.5px;
+  color: var(--text-muted);
+}
+
+/* Card prose */
+.config-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+.config-card-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+/* Select + save-button row (cover-letter card) */
+.config-select-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Positioned wrapper: fills row, shows custom chevron */
+.config-select-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 240px;
+}
+.config-select-wrap select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 34px;
+}
+.config-chevron {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--text-faint);
+  font-size: 11px;
+}
+
+/* Model row: inline label + select (agent card) */
+.config-model-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.config-model-label {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Follow-company checkbox row */
+.config-follow-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+}
+.config-follow-row input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex: none;
+}
+
 /* ── Perfil (Profile) ──────────────────────────────────────────────────── */
 
 /* Section wrapper: flex column with 16px gap between cards; override
