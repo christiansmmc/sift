@@ -33,31 +33,49 @@ export default function Dashboard() {
   return (
     <section>
       <h1>Painel</h1>
-      <div style={{ display: "flex", gap: 12, alignItems: "center", margin: "16px 0" }}>
-        <label>Modo
-          <select value={mode} onChange={(e) => setMode(e.target.value as "scan" | "revisar")} disabled={running} style={{ marginLeft: 8 }}>
+
+      <div className="card">
+        <label className="field">
+          Modo
+          <select value={mode} onChange={(e) => setMode(e.target.value as "scan" | "revisar")} disabled={running}>
             <option value="revisar">Revisar (preparar p/ aprovar)</option>
             <option value="scan">Scan (só descobrir)</option>
           </select>
         </label>
-        <label>Vagas por busca
+        <label className="field">
+          Vagas por busca
           <input type="number" min={1} max={50} value={batch}
             onChange={(e) => setBatch(Number(e.target.value))}
-            disabled={running} style={{ width: 64, marginLeft: 8 }} />
+            disabled={running} style={{ width: 80 }} />
         </label>
-        {running
-          ? <button onClick={stop}>Parar</button>
-          : <button onClick={start}>Iniciar</button>}
-        <span>{running ? "🟢 Buscando…" : "⚪ Parado"}</span>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 8 }}>
+          {running
+            ? <button className="btn" onClick={stop}>Parar</button>
+            : <button className="btn btn-primary" onClick={start}>Iniciar</button>}
+          <span className="hint">{running ? "🟢 Buscando…" : "⚪ Parado"}</span>
+        </div>
+        {error && <p style={{ color: "var(--danger)", marginTop: 8 }}>{error}</p>}
       </div>
-      {error && <p style={{ color: "#c0392b" }}>{error}</p>}
+
       {counts && (
-        <ul>
-          <li>Vagas encontradas: {counts.found}</li>
-          <li>Aguardando aprovação: {counts.awaiting_approval}</li>
-          <li>Enviadas: {counts.submitted}</li>
-          <li>Pendências: {counts.pending}</li>
-        </ul>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 8 }}>
+          <div className="card" style={{ flex: "1 1 120px", textAlign: "center" }}>
+            <div style={{ fontSize: 28, fontWeight: 700 }}>{counts.found}</div>
+            <div className="hint">Encontradas</div>
+          </div>
+          <div className="card" style={{ flex: "1 1 120px", textAlign: "center" }}>
+            <div style={{ fontSize: 28, fontWeight: 700 }}>{counts.awaiting_approval}</div>
+            <div className="hint">Aguardando aprovação</div>
+          </div>
+          <div className="card" style={{ flex: "1 1 120px", textAlign: "center" }}>
+            <div style={{ fontSize: 28, fontWeight: 700 }}>{counts.submitted}</div>
+            <div className="hint">Enviadas</div>
+          </div>
+          <div className="card" style={{ flex: "1 1 120px", textAlign: "center" }}>
+            <div style={{ fontSize: 28, fontWeight: 700 }}>{counts.pending}</div>
+            <div className="hint">Pendências</div>
+          </div>
+        </div>
       )}
     </section>
   );
