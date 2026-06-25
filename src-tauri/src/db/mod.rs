@@ -37,6 +37,13 @@ fn migrate(conn: &Connection) -> rusqlite::Result<()> {
             updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
         )",
     )?;
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS settings (
+            key   TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        )",
+        [],
+    )?;
     Ok(())
 }
 
@@ -53,6 +60,7 @@ pub mod applications;
 pub mod pending;
 pub mod profile;
 pub mod answers;
+pub mod settings;
 
 #[cfg(test)]
 pub fn open_in_memory() -> Connection {
