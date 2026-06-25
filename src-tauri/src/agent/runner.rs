@@ -194,6 +194,11 @@ pub fn start(
             dbg_log(&format!("RAW: {json_line}"));
             for text_line in extract_text_lines(&json_line) {
                 dbg_log(&format!("TEXT: {text_line}"));
+                if let Some(status) = super::protocol::parse_status(&text_line) {
+                    use tauri::Emitter;
+                    let _ = app.clone().emit("agent://status", status);
+                    continue;
+                }
                 let app2 = app.clone();
                 let outcome = process_line_with(&text_line, &db, |ev, payload| {
                     use tauri::Emitter;
