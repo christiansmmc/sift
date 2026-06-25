@@ -34,6 +34,8 @@ export const api = {
   submitApproved: () => invoke<void>("submit_approved"),
   countApproved: () => invoke<number>("count_approved"),
   listApproved: () => invoke<ReviewItem[]>("list_approved"),
+  getSetting: (key: string) => invoke<string | null>("get_setting", { key }),
+  setSetting: (key: string, value: string) => invoke<void>("set_setting", { key, value }),
 };
 
 export async function pickResumeFile(): Promise<string | null> {
