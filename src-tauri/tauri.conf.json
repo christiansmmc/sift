@@ -13,8 +13,10 @@
     "windows": [
       {
         "title": "applybot",
-        "width": 1000,
-        "height": 600,
+        "width": 1200,
+        "height": 800,
+        "minWidth": 940,
+        "minHeight": 620,
         "decorations": false
       }
     ],
