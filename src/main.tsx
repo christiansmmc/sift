@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import "./theme.css";
+import "./styles/index.css";
 import { initTheme } from "./lib/theme";
 import App from "./App";
 
