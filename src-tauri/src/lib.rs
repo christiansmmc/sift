@@ -40,6 +40,8 @@ pub fn run() {
             commands::count_approved,
             commands::list_approved,
             commands::submit_approved,
+            commands::get_setting,
+            commands::set_setting,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
