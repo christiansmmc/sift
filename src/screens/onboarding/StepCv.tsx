@@ -67,14 +67,14 @@ export default function StepCv({
       <h2>Currículo</h2>
       <p className="hint">Envie ou cole seu currículo. A análise pré-preenche seus dados e os critérios de busca — você revisa nos próximos passos.</p>
       <div className="row">
-        <button onClick={upload} disabled={busy !== ""}>
+        <button className="btn" onClick={upload} disabled={busy !== ""}>
           {busy === "parsing" ? "Lendo…" : "Enviar PDF/DOCX"}
         </button>
-        <button onClick={analyze} disabled={!cvText.trim() || busy !== ""}>
+        <button className="btn" onClick={analyze} disabled={!cvText.trim() || busy !== ""}>
           {busy === "analyzing" ? "Analisando…" : "Analisar com Claude"}
         </button>
       </div>
-      <label>Texto do currículo
+      <label className="field">Texto do currículo
         <textarea rows={12} value={cvText} onChange={(e) => setCvText(e.target.value)}
           placeholder="Cole o texto do seu currículo aqui, ou envie um PDF/DOCX acima." />
       </label>

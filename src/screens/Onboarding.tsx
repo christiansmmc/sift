@@ -60,11 +60,11 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
       </main>
       {error && <p className="onb-error">Erro ao salvar: {error}</p>}
       <footer className="onb-foot">
-        <button disabled={step === 0 || saving} onClick={() => setStep((s) => s - 1)}>Voltar</button>
+        <button className="btn" disabled={step === 0 || saving} onClick={() => setStep((s) => s - 1)}>Voltar</button>
         {step < 2 ? (
-          <button onClick={() => setStep((s) => s + 1)}>Próximo</button>
+          <button className="btn btn-primary" onClick={() => setStep((s) => s + 1)}>Próximo</button>
         ) : (
-          <button disabled={!canFinish || saving} onClick={finish}>
+          <button className="btn btn-primary" disabled={!canFinish || saving} onClick={finish}>
             {saving ? "Salvando…" : "Concluir"}
           </button>
         )}

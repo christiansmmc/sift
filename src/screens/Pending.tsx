@@ -46,24 +46,26 @@ export default function Pending() {
       <h1>Pendências</h1>
       {status && <p className="hint">{status}</p>}
       {items.map((p) => (
-        <div key={p.id} style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, margin: "12px 0" }}>
-          <strong>{labelFor(p.category)}</strong>
-          <p style={{ color: "#555", margin: "4px 0" }}>{p.description}</p>
+        <div key={p.id} className="card">
+          <div style={{ marginBottom: 8 }}>
+            <span className={`pill pill-${p.category}`}>{labelFor(p.category)}</span>
+          </div>
+          <p style={{ color: "var(--text-muted)", margin: "4px 0 10px" }}>{p.description}</p>
           {p.questions.length > 0 ? (
             <>
               {p.questions.map((q) => {
                 const key = `${p.id}:${q}`;
                 return (
-                  <label key={key} style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 8 }}>
+                  <label key={key} className="field">
                     {q}
                     <input value={drafts[key] ?? ""} onChange={(e) => setDraft(key, e.target.value)} />
                   </label>
                 );
               })}
-              <button onClick={() => saveAnswers(p)}>Salvar respostas e resolver</button>
+              <button className="btn btn-primary" onClick={() => saveAnswers(p)}>Salvar respostas e resolver</button>
             </>
           ) : (
-            <button onClick={() => dismiss(p)}>Resolver</button>
+            <button className="btn btn-ghost" onClick={() => dismiss(p)}>Resolver</button>
           )}
         </div>
       ))}
