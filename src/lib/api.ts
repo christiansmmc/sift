@@ -31,6 +31,9 @@ export const api = {
   rejectApplication: (id: number) => invoke<void>("reject_application", { id }),
   stopAgent: () => invoke<void>("stop_agent"),
   agentRunning: () => invoke<boolean>("agent_running"),
+  submitApproved: () => invoke<void>("submit_approved"),
+  countApproved: () => invoke<number>("count_approved"),
+  listApproved: () => invoke<ReviewItem[]>("list_approved"),
 };
 
 export async function pickResumeFile(): Promise<string | null> {

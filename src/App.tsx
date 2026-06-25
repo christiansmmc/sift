@@ -31,6 +31,7 @@ export default function App() {
   const [batch, setBatch] = useState(10);
   const [feed, setFeed] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [approvedCount, setApprovedCount] = useState(0);
 
   useEffect(() => {
     api.getOnboardingStatus().then(setOnboarded).catch(() => setOnboarded(false));
@@ -39,6 +40,7 @@ export default function App() {
   async function refreshDashboard() {
     setCounts(await api.dashboardCounts());
     setRunning(await api.agentRunning());
+    setApprovedCount(await api.countApproved());
   }
 
   // Subscribe once (after onboarding) for the app's lifetime.
@@ -66,6 +68,12 @@ export default function App() {
   async function onStop() {
     await api.stopAgent();
     setRunning(false);
+  }
+  async function onSubmitApproved() {
+    setError(null);
+    setFeed([]);
+    try { await api.submitApproved(); setRunning(true); }
+    catch (e) { setError(String(e)); }
   }
 
   if (onboarded === null) return <div className="loading">Carregando…</div>;
@@ -103,6 +111,8 @@ export default function App() {
             setBatch={setBatch}
             onStart={onStart}
             onStop={onStop}
+            approvedCount={approvedCount}
+            onSubmitApproved={onSubmitApproved}
           />
         )}
         {screen === "jobs" && <Jobs />}

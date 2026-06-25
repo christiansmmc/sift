@@ -198,3 +198,34 @@ pub fn reject_application(state: State<AppState>, id: i64) -> CmdResult<()> {
     let conn = state.db.lock().map_err(err)?;
     applications::set_status(&conn, id, "discarded").map_err(err)
 }
+
+#[tauri::command]
+pub fn count_approved(state: State<AppState>) -> CmdResult<i64> {
+    let conn = state.db.lock().map_err(err)?;
+    applications::count_approved(&conn).map_err(err)
+}
+
+#[tauri::command]
+pub fn list_approved(state: State<AppState>) -> CmdResult<Vec<applications::ReviewItem>> {
+    let conn = state.db.lock().map_err(err)?;
+    applications::approved_queue(&conn).map_err(err)
+}
+
+#[tauri::command]
+pub fn submit_approved(state: State<AppState>, app: tauri::AppHandle) -> CmdResult<()> {
+    let mut slot = state.agent.lock().map_err(err)?;
+    if slot.as_ref().map(|h| h.is_running()).unwrap_or(false) {
+        return Err("O agente já está em execução.".into());
+    }
+    let items = {
+        let conn = state.db.lock().map_err(err)?;
+        applications::approved_for_submit(&conn).map_err(err)?
+    };
+    if items.is_empty() {
+        return Err("Nenhuma candidatura aprovada para enviar.".into());
+    }
+    if let Some(old) = slot.take() { old.stop(); }
+    let handle = crate::agent::runner::start_submit(state.db.clone(), app, items)?;
+    *slot = Some(handle);
+    Ok(())
+}

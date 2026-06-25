@@ -8,6 +8,7 @@ pub const PENDING: &str = "APPLYBOT_PENDING";
 pub const LOGIN_REQUIRED: &str = "APPLYBOT_LOGIN_REQUIRED";
 pub const DONE: &str = "APPLYBOT_DONE";
 pub const STATUS: &str = "APPLYBOT_STATUS";
+pub const SUBMITTED: &str = "APPLYBOT_SUBMITTED";
 
 /// Parse a `APPLYBOT_STATUS` line and return the status text, or `None` if the
 /// line is not a status marker or the text after stripping the prefix is empty.
@@ -52,6 +53,7 @@ pub enum AgentEvent {
     Pending(PendingReport),
     LoginRequired,
     Done,
+    Submitted(i64),
 }
 
 /// Parse a single line of agent stdout into an event, or None if it is not a marker.
@@ -62,6 +64,9 @@ pub fn parse_line(line: &str) -> Option<AgentEvent> {
     }
     if line == DONE {
         return Some(AgentEvent::Done);
+    }
+    if let Some(rest) = line.strip_prefix(SUBMITTED) {
+        return rest.trim().parse::<i64>().ok().map(AgentEvent::Submitted);
     }
     if let Some(rest) = line.strip_prefix(JOB) {
         return serde_json::from_str::<JobReport>(rest.trim()).ok().map(AgentEvent::Job);
@@ -119,6 +124,12 @@ mod tests {
         assert_eq!(parse_line(""), None);
         // STATUS lines must NOT be treated as AgentEvents by parse_line
         assert_eq!(parse_line("APPLYBOT_STATUS Buscando vagas no LinkedIn..."), None);
+    }
+
+    #[test]
+    fn parses_submitted_marker() {
+        assert_eq!(parse_line("APPLYBOT_SUBMITTED 7"), Some(AgentEvent::Submitted(7)));
+        assert_eq!(parse_line("APPLYBOT_SUBMITTED notanumber"), None);
     }
 
     #[test]

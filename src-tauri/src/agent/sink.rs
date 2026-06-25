@@ -9,6 +9,7 @@ pub enum EventOutcome {
     Pending,
     LoginRequired,
     Done,
+    Submitted,
 }
 
 pub fn apply_event(conn: &Connection, event: &AgentEvent) -> rusqlite::Result<EventOutcome> {
@@ -56,6 +57,12 @@ pub fn apply_event(conn: &Connection, event: &AgentEvent) -> rusqlite::Result<Ev
             Ok(EventOutcome::LoginRequired)
         }
         AgentEvent::Done => Ok(EventOutcome::Done),
+        AgentEvent::Submitted(id) => {
+            // Only flips a row that is actually `approved`, so a stray id can't
+            // mark an unrelated application submitted without anything being sent.
+            applications::mark_submitted(conn, *id)?;
+            Ok(EventOutcome::Submitted)
+        }
     }
 }
 
@@ -64,6 +71,32 @@ mod tests {
     use super::*;
     use super::super::protocol::{Answer, JobReport, PendingReport};
     use crate::db::{jobs, open_in_memory};
+
+    #[test]
+    fn submitted_event_marks_application_submitted() {
+        let conn = open_in_memory();
+        let job_id = jobs::insert(&conn, &jobs::NewJob {
+            title:"D".into(), company:"A".into(), url:"https://linkedin.com/jobs/1".into(), source:"linkedin".into()
+        }).unwrap();
+        let app_id = applications::create_with_content(&conn, job_id, "cl", "[]").unwrap();
+        applications::set_status(&conn, app_id, "approved").unwrap();
+        apply_event(&conn, &AgentEvent::Submitted(app_id)).unwrap();
+        let a = &applications::list(&conn).unwrap()[0];
+        assert_eq!(a.status, "submitted");
+        assert!(a.submitted_at.is_some());
+    }
+
+    #[test]
+    fn submitted_does_not_flip_a_non_approved_application() {
+        let conn = open_in_memory();
+        let job_id = jobs::insert(&conn, &jobs::NewJob {
+            title:"D".into(), company:"A".into(), url:"https://linkedin.com/jobs/2".into(), source:"linkedin".into()
+        }).unwrap();
+        // awaiting_approval (not approved) — a stray Submitted must NOT mark it submitted
+        let app_id = applications::create_with_content(&conn, job_id, "cl", "[]").unwrap();
+        apply_event(&conn, &AgentEvent::Submitted(app_id)).unwrap();
+        assert_eq!(applications::list(&conn).unwrap()[0].status, "awaiting_approval");
+    }
 
     #[test]
     fn job_event_queues_application_with_content() {

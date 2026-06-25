@@ -124,20 +124,12 @@ impl Drop for AgentHandle {
     }
 }
 
-/// Spawn the headless agent and start streaming its output into the DB.
-pub fn start(
+/// Spawn the headless agent with `prompt` and start streaming its output into the DB.
+fn spawn_agent(
     db: Arc<Mutex<Connection>>,
     app: tauri::AppHandle,
-    profile: crate::db::profile::Profile,
-    mode: String,
-    batch_size: u32,
+    prompt: String,
 ) -> Result<AgentHandle, String> {
-    let answers = {
-        let conn = db.lock().map_err(|e| e.to_string())?;
-        crate::db::answers::list(&conn).map_err(|e| e.to_string())?
-    };
-    let prompt = crate::agent::prompt::build_system_prompt(&profile, &answers, &mode, batch_size);
-
     let mut cmd = Command::new("claude");
     cmd.arg("-p").arg(&prompt);
     for a in agent_args() {
@@ -229,6 +221,32 @@ pub fn start(
     });
 
     Ok(AgentHandle { stop, child })
+}
+
+/// Build the search prompt and spawn the agent.
+pub fn start(
+    db: Arc<Mutex<Connection>>,
+    app: tauri::AppHandle,
+    profile: crate::db::profile::Profile,
+    mode: String,
+    batch_size: u32,
+) -> Result<AgentHandle, String> {
+    let answers = {
+        let conn = db.lock().map_err(|e| e.to_string())?;
+        crate::db::answers::list(&conn).map_err(|e| e.to_string())?
+    };
+    let prompt = crate::agent::prompt::build_system_prompt(&profile, &answers, &mode, batch_size);
+    spawn_agent(db, app, prompt)
+}
+
+/// Build the submission prompt and spawn the agent.
+pub fn start_submit(
+    db: Arc<Mutex<Connection>>,
+    app: tauri::AppHandle,
+    items: Vec<crate::db::applications::SubmitItem>,
+) -> Result<AgentHandle, String> {
+    let prompt = crate::agent::prompt::build_submit_prompt(&items);
+    spawn_agent(db, app, prompt)
 }
 
 #[cfg(test)]
