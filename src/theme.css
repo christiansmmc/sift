@@ -86,6 +86,6 @@ input:disabled { background: var(--surface-2); color: var(--text-muted); }
 ::-webkit-scrollbar-corner { background: transparent; }
 
 /* Light theme: the border color is too faint on white — use a darker thumb. */
-:root[data-theme="light"] { scrollbar-color: #a8a5a0 transparent; }
-:root[data-theme="light"] ::-webkit-scrollbar-thumb { background: #a8a5a0; }
-:root[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #7d7a75; }
+:root[data-theme="light"] { scrollbar-color: #8a8782 transparent; }
+:root[data-theme="light"] ::-webkit-scrollbar-thumb { background: #8a8782; }
+:root[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #5f5c57; }
