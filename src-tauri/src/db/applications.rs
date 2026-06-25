@@ -42,6 +42,18 @@ pub fn set_status(conn: &Connection, id: i64, status: &str) -> rusqlite::Result<
     Ok(())
 }
 
+/// Mark an application submitted ONLY if it is currently `approved`. Guards
+/// against a stray/hallucinated id from the agent flipping an unrelated row to
+/// "submitted" without anything actually being sent. Returns true if a row changed.
+pub fn mark_submitted(conn: &Connection, id: i64) -> rusqlite::Result<bool> {
+    let n = conn.execute(
+        "UPDATE applications SET status = 'submitted', submitted_at = datetime('now') \
+         WHERE id = ?1 AND status = 'approved'",
+        [id],
+    )?;
+    Ok(n > 0)
+}
+
 pub fn list(conn: &Connection) -> rusqlite::Result<Vec<Application>> {
     let mut stmt = conn.prepare(
         "SELECT id, job_id, folder_path, cv_path, cover_letter_path, status, submitted_at \

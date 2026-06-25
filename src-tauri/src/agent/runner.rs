@@ -232,8 +232,8 @@ pub fn start(
     batch_size: u32,
 ) -> Result<AgentHandle, String> {
     let answers = {
-        let conn = db.lock().unwrap_or_else(|p| p.into_inner());
-        crate::db::answers::list(&conn).unwrap_or_default()
+        let conn = db.lock().map_err(|e| e.to_string())?;
+        crate::db::answers::list(&conn).map_err(|e| e.to_string())?
     };
     let prompt = crate::agent::prompt::build_system_prompt(&profile, &answers, &mode, batch_size);
     spawn_agent(db, app, prompt)
