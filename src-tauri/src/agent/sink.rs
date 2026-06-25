@@ -9,6 +9,7 @@ pub enum EventOutcome {
     Pending,
     LoginRequired,
     Done,
+    Submitted,
 }
 
 pub fn apply_event(conn: &Connection, event: &AgentEvent) -> rusqlite::Result<EventOutcome> {
@@ -56,6 +57,10 @@ pub fn apply_event(conn: &Connection, event: &AgentEvent) -> rusqlite::Result<Ev
             Ok(EventOutcome::LoginRequired)
         }
         AgentEvent::Done => Ok(EventOutcome::Done),
+        AgentEvent::Submitted(id) => {
+            applications::set_status(conn, *id, "submitted")?;
+            Ok(EventOutcome::Submitted)
+        }
     }
 }
 
@@ -64,6 +69,19 @@ mod tests {
     use super::*;
     use super::super::protocol::{Answer, JobReport, PendingReport};
     use crate::db::{jobs, open_in_memory};
+
+    #[test]
+    fn submitted_event_marks_application_submitted() {
+        let conn = open_in_memory();
+        let job_id = jobs::insert(&conn, &jobs::NewJob {
+            title:"D".into(), company:"A".into(), url:"https://linkedin.com/jobs/1".into(), source:"linkedin".into()
+        }).unwrap();
+        let app_id = applications::create_with_content(&conn, job_id, "cl", "[]").unwrap();
+        apply_event(&conn, &AgentEvent::Submitted(app_id)).unwrap();
+        let a = &applications::list(&conn).unwrap()[0];
+        assert_eq!(a.status, "submitted");
+        assert!(a.submitted_at.is_some());
+    }
 
     #[test]
     fn job_event_queues_application_with_content() {
