@@ -38,19 +38,38 @@ export default function Pending() {
   }
 
   if (items.length === 0) {
-    return <section><h1>Pendências</h1><p>Nada pendente. 🎉</p></section>;
+    return (
+      <section>
+        <div className="pend-header">
+          <h1 className="pend-title">Pendências</h1>
+          <p className="pend-subtitle">Quando o agente precisar de você — uma pergunta sem resposta, login ou verificação — aparece aqui.</p>
+        </div>
+        <div className="card pend-empty-card">
+          <div className="pend-empty-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24">
+              <polyline points="5,12.5 10,17.5 19,7" fill="none" stroke="var(--ok)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <div className="pend-empty-title">Nada pendente</div>
+          <div className="pend-empty-body">O agente está rodando sem precisar da sua intervenção.</div>
+        </div>
+      </section>
+    );
   }
 
   return (
     <section>
-      <h1>Pendências</h1>
+      <div className="pend-header">
+        <h1 className="pend-title">Pendências</h1>
+        <p className="pend-subtitle">Quando o agente precisar de você — uma pergunta sem resposta, login ou verificação — aparece aqui.</p>
+      </div>
       {status && <p className="hint">{status}</p>}
       {items.map((p) => (
-        <div key={p.id} className="card">
-          <div style={{ marginBottom: 8 }}>
+        <div key={p.id} className="card pend-card">
+          <div className="pend-card-pill">
             <span className={`pill pill-${p.category}`}>{labelFor(p.category)}</span>
           </div>
-          <p style={{ color: "var(--text-muted)", margin: "4px 0 10px" }}>{p.description}</p>
+          <p className="pend-card-desc">{p.description}</p>
           {p.questions.length > 0 ? (
             <>
               {p.questions.map((q) => {
