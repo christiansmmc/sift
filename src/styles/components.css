@@ -110,6 +110,7 @@ select {
 textarea {
   resize: vertical;
   min-height: 130px;
+  width: 100%;
 }
 
 /* Editing state: accent border (proto: 1.5px solid accent, border-radius 10px) */

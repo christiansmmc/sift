@@ -63,7 +63,11 @@
 /* Run button: solid fill, swaps accent ↔ danger by running state */
 .painel-run-btn {
   flex: none;
-  padding: 10px 26px;
+  height: 38px;
+  padding: 0 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
   border-radius: 9px;
   cursor: pointer;
@@ -85,7 +89,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding-bottom: 10px;
+  height: 38px;
 }
 .painel-status-dot {
   width: 8px;
@@ -124,6 +128,8 @@
 .painel-count-card {
   margin: 0;
   padding: 17px 18px;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Count card label row: colored dot + text */
@@ -156,6 +162,7 @@
   font-weight: 600;
   letter-spacing: -1px;
   color: var(--text);
+  margin-top: auto;
 }
 
 /* Activity section */
@@ -301,20 +308,19 @@
   gap: 5px;
 }
 .vagas-answer-item {
-  display: flex;
-  gap: 6px;
+  display: block;
   font-size: 13px;
   line-height: 1.5;
   color: var(--text);
+  overflow-wrap: anywhere;
 }
 .vagas-answer-q {
   font-weight: 600;
   color: var(--text-muted);
-  flex: none;
 }
 .vagas-answer-sep {
   color: var(--text-faint);
-  flex: none;
+  margin: 0 4px;
 }
 .vagas-answer-a {
   color: var(--text);
@@ -564,7 +570,8 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-width: 640px;
+  max-width: 820px;
+  margin: 0 auto;
 }
 .perfil .card {
   margin: 0;
