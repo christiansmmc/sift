@@ -116,6 +116,35 @@ pub fn review_queue(conn: &Connection) -> rusqlite::Result<Vec<ReviewItem>> {
     rows.collect()
 }
 
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SubmitItem {
+    pub application_id: i64,
+    pub url: String,
+    pub cover_letter: String,
+    pub answers_json: String,
+}
+
+pub fn approved_for_submit(conn: &Connection) -> rusqlite::Result<Vec<SubmitItem>> {
+    let mut stmt = conn.prepare(
+        "SELECT a.id, j.url, COALESCE(a.cover_letter,''), COALESCE(a.answers_json,'[]') \
+         FROM applications a JOIN jobs j ON a.job_id = j.id \
+         WHERE a.status = 'approved' ORDER BY a.id ASC",
+    )?;
+    let rows = stmt.query_map([], |r| {
+        Ok(SubmitItem {
+            application_id: r.get(0)?,
+            url: r.get(1)?,
+            cover_letter: r.get(2)?,
+            answers_json: r.get(3)?,
+        })
+    })?;
+    rows.collect()
+}
+
+pub fn count_approved(conn: &Connection) -> rusqlite::Result<i64> {
+    conn.query_row("SELECT COUNT(*) FROM applications WHERE status='approved'", [], |r| r.get(0))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -133,6 +162,20 @@ mod tests {
             },
         )
         .unwrap()
+    }
+
+    #[test]
+    fn approved_for_submit_lists_only_approved() {
+        let conn = open_in_memory();
+        let j = jobs::insert(&conn, &jobs::NewJob{title:"D".into(),company:"A".into(),url:"u1".into(),source:"linkedin".into()}).unwrap();
+        let id = create_with_content(&conn, j, "cl", "[]").unwrap();
+        assert_eq!(count_approved(&conn).unwrap(), 0); // awaiting_approval, not approved
+        set_status(&conn, id, "approved").unwrap();
+        let items = approved_for_submit(&conn).unwrap();
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].application_id, id);
+        assert_eq!(items[0].url, "u1");
+        assert_eq!(count_approved(&conn).unwrap(), 1);
     }
 
     #[test]

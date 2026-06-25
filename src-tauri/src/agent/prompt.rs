@@ -1,6 +1,7 @@
 use crate::db::profile::Profile;
 
 const TEMPLATE: &str = include_str!("system_prompt.md");
+const SUBMIT_TEMPLATE: &str = include_str!("submit_prompt.md");
 
 fn mode_instructions(mode: &str, batch_size: u32) -> String {
     match mode {
@@ -50,6 +51,45 @@ pub fn build_system_prompt(profile: &Profile, answers: &[(String, String)], mode
         .replace("{{CRITERIA}}", &criteria_block)
         .replace("{{SCREENING}}", &screening_block)
         .replace("{{ANSWER_BANK}}", &answer_bank)
+}
+
+pub fn build_submit_prompt(items: &[crate::db::applications::SubmitItem]) -> String {
+    let block = if items.is_empty() {
+        "(none)".to_string()
+    } else {
+        items
+            .iter()
+            .map(|it| {
+                format!(
+                    "Application id {}: {}\n  Cover letter: {}\n  Answers (JSON): {}",
+                    it.application_id, it.url, it.cover_letter, it.answers_json
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("\n\n")
+    };
+    SUBMIT_TEMPLATE.replace("{{APPLICATIONS}}", &block)
+}
+
+#[cfg(test)]
+mod submit_tests {
+    use super::*;
+    use crate::db::applications::SubmitItem;
+
+    #[test]
+    fn submit_prompt_lists_applications() {
+        let items = vec![SubmitItem {
+            application_id: 7,
+            url: "https://linkedin.com/jobs/7".into(),
+            cover_letter: "Dear Acme".into(),
+            answers_json: r#"[{"question":"Q","answer":"A"}]"#.into(),
+        }];
+        let out = build_submit_prompt(&items);
+        assert!(out.contains("Application id 7"));
+        assert!(out.contains("linkedin.com/jobs/7"));
+        assert!(out.contains("APPLYBOT_SUBMITTED"));
+        assert!(!out.contains("{{"));
+    }
 }
 
 #[cfg(test)]
