@@ -7,7 +7,7 @@ export default function Titlebar() {
     <div className="titlebar" data-tauri-drag-region>
       <div className="titlebar-brand">
         <span className="titlebar-logo" aria-hidden />
-        <span className="titlebar-word">applybot</span>
+        <span className="titlebar-word">sift</span>
       </div>
       <div className="titlebar-controls">
         <button className="tb-btn" onClick={() => win.minimize()} aria-label="Minimizar">─</button>

@@ -1,5 +1,5 @@
 export type Theme = "light" | "dark";
-const KEY = "applybot-theme";
+const KEY = "sift-theme";
 
 export function getTheme(): Theme {
   return (localStorage.getItem(KEY) as Theme) ?? "light";

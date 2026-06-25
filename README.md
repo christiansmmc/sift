@@ -1,13 +1,13 @@
-# applybot
+# Sift
 
-**applybot** is a Windows desktop app that finds jobs on **LinkedIn**, writes a tailored
-cover letter and screening answers for each one, and **shows them to you for approval before
+**Sift** is a Windows desktop app that finds jobs on **LinkedIn**, writes a tailored cover
+letter and screening answers for each one, and **shows them to you for approval before
 anything is submitted**. You stay in control — the agent never sends an application without
 your explicit "Approve".
 
 It drives **your own Chrome browser** through Claude. There is no scraping API and no
-metered API billing: applybot runs the **Claude Code CLI** under the hood, which operates
-Chrome through the **Claude in Chrome** extension using your existing Claude subscription.
+metered API billing: Sift runs the **Claude Code CLI** under the hood, which operates Chrome
+through the **Claude in Chrome** extension using your existing Claude subscription.
 
 > The app's UI is in Brazilian Portuguese (pt-BR). This README is in English.
 
@@ -17,7 +17,7 @@ Chrome through the **Claude in Chrome** extension using your existing Claude sub
 
 ```
 ┌──────────────────────────────────────────────┐
-│  applybot (desktop app)                        │
+│  Sift (desktop app)                            │
 │   • You configure your profile once            │
 │   • You start a run and approve/reject jobs    │
 └───────────────┬────────────────────────────────┘
@@ -27,7 +27,7 @@ Chrome through the **Claude in Chrome** extension using your existing Claude sub
 ```
 
 1. You fill in your profile (CV, personal data, what you're looking for) — once.
-2. You press **Iniciar** (Start). applybot launches the Claude Code CLI in the background.
+2. You press **Iniciar** (Start). Sift launches the Claude Code CLI in the background.
 3. Claude controls **your open Chrome window** through the Claude in Chrome extension,
    searches LinkedIn, evaluates each posting against your criteria, and prepares a tailored
    cover letter + answers for the good Easy-Apply matches.
@@ -55,7 +55,7 @@ You need three things working **before** you start a run:
    claude --version
    ```
 
-You also need to be **logged into LinkedIn in that same Chrome window**. applybot assumes the
+You also need to be **logged into LinkedIn in that same Chrome window**. Sift assumes the
 LinkedIn session is already active in the browser — it does not store your LinkedIn password.
 
 ---
@@ -64,9 +64,9 @@ LinkedIn session is already active in the browser — it does not store your Lin
 
 1. Go to the [**Releases**](../../releases) page.
 2. Download one of the Windows installers from the latest release:
-   - `applybot_<version>_x64-setup.exe` — NSIS installer (recommended), **or**
-   - `applybot_<version>_x64_en-US.msi` — MSI installer.
-3. Run the installer and launch **applybot** from the Start menu.
+   - `sift_<version>_x64-setup.exe` — NSIS installer (recommended), **or**
+   - `sift_<version>_x64_en-US.msi` — MSI installer.
+3. Run the installer and launch **Sift** from the Start menu.
 
 > The build is not code-signed, so Windows SmartScreen may warn on first launch. Click
 > **More info → Run anyway**.
@@ -128,7 +128,7 @@ Edit your CV, personal data, and search criteria any time after onboarding.
 
 - Everything (profile, CV text, jobs, applications, pending items) is stored **locally** in a
   SQLite database on your machine.
-- applybot does **not** store your LinkedIn credentials — it relies on the LinkedIn session
+- Sift does **not** store your LinkedIn credentials — it relies on the LinkedIn session
   already open in your Chrome.
 - The agent runs under your own Claude subscription via the Claude Code CLI.
 
@@ -141,7 +141,7 @@ Edit your CV, personal data, and search criteria any time after onboarding.
 | "Falha ao iniciar o agente (claude)" | The `claude` CLI isn't installed or not on `PATH`. Install Claude Code and verify `claude --version`. |
 | Agent does nothing / "Browser extension is not connected" | Open Chrome and make sure the Claude in Chrome extension is connected/signed in before pressing **Iniciar**. |
 | A *Pendência* says login is required | Log into LinkedIn in the same Chrome window, then start again. |
-| External-application pending items | Those jobs apply on the company's own site (not LinkedIn Easy Apply); applybot won't fill them automatically. |
+| External-application pending items | Those jobs apply on the company's own site (not LinkedIn Easy Apply); Sift won't fill them automatically. |
 
 ---
 
@@ -160,6 +160,8 @@ npm run tauri build    # produce the Windows installers in
 **Stack:** Tauri v2 · React 19 · TypeScript · Rust (SQLite via rusqlite). The Rust backend
 spawns the Claude Code CLI headless (`claude -p --chrome`), streams its output, and persists
 results to SQLite; the React UI watches that state and reflects it in real time.
+
+The app icon and brand assets live in [`brand/`](brand/).
 
 ---
 

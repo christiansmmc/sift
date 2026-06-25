@@ -18,16 +18,16 @@ use rusqlite::Connection;
 use super::protocol::parse_line;
 use super::sink::{apply_event, EventOutcome};
 
-/// Opt-in debug instrumentation: when the `APPLYBOT_DEBUG` env var is set,
-/// append a line to `applybot-agent.log` in the temp dir so we can see exactly
+/// Opt-in debug instrumentation: when the `SIFT_DEBUG` env var is set,
+/// append a line to `sift-agent.log` in the temp dir so we can see exactly
 /// what the agent process emits. Off by default — it would otherwise write the
 /// prompt (which includes the CV) and job data to a plaintext temp file.
 fn dbg_log(msg: &str) {
-    if std::env::var_os("APPLYBOT_DEBUG").is_none() {
+    if std::env::var_os("SIFT_DEBUG").is_none() {
         return;
     }
     use std::io::Write;
-    let path = std::env::temp_dir().join("applybot-agent.log");
+    let path = std::env::temp_dir().join("sift-agent.log");
     if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(path) {
         let _ = writeln!(f, "{msg}");
     }
@@ -153,8 +153,8 @@ fn spawn_agent(
         prompt.len(),
         agent_args()
     ));
-    if std::env::var_os("APPLYBOT_DEBUG").is_some() {
-        let _ = std::fs::write(std::env::temp_dir().join("applybot-prompt.txt"), &prompt);
+    if std::env::var_os("SIFT_DEBUG").is_some() {
+        let _ = std::fs::write(std::env::temp_dir().join("sift-prompt.txt"), &prompt);
     }
 
     let stdout = child.stdout.take().ok_or("no child stdout")?;
@@ -275,7 +275,7 @@ mod tests {
     #[test]
     fn process_line_queues_job_and_reports_outcome() {
         let db = Mutex::new(open_in_memory());
-        let line = r#"APPLYBOT_JOB {"title":"Dev","company":"Acme","url":"https://linkedin.com/jobs/1","match_summary":"ok","cover_letter":"Hi","answers":[]}"#;
+        let line = r#"SIFT_JOB {"title":"Dev","company":"Acme","url":"https://linkedin.com/jobs/1","match_summary":"ok","cover_letter":"Hi","answers":[]}"#;
         let mut emitted = Vec::new();
         let outcome = process_line_with(line, &db, |ev, p| emitted.push((ev.to_string(), p)));
         assert_eq!(outcome, Some(EventOutcome::Queued));
@@ -293,15 +293,15 @@ mod tests {
 
     #[test]
     fn extract_text_lines_pulls_assistant_text() {
-        let line = r#"{"type":"assistant","message":{"content":[{"type":"text","text":"line one\nAPPLYBOT_DONE"}]}}"#;
+        let line = r#"{"type":"assistant","message":{"content":[{"type":"text","text":"line one\nSIFT_DONE"}]}}"#;
         let lines = extract_text_lines(line);
-        assert_eq!(lines, vec!["line one".to_string(), "APPLYBOT_DONE".to_string()]);
+        assert_eq!(lines, vec!["line one".to_string(), "SIFT_DONE".to_string()]);
     }
 
     #[test]
     fn extract_text_lines_handles_result_and_ignores_other() {
-        let result = r#"{"type":"result","subtype":"success","result":"APPLYBOT_DONE"}"#;
-        assert_eq!(extract_text_lines(result), vec!["APPLYBOT_DONE".to_string()]);
+        let result = r#"{"type":"result","subtype":"success","result":"SIFT_DONE"}"#;
+        assert_eq!(extract_text_lines(result), vec!["SIFT_DONE".to_string()]);
         assert!(extract_text_lines(r#"{"type":"system","subtype":"init"}"#).is_empty());
         assert!(extract_text_lines("not json at all").is_empty());
     }

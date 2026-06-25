@@ -13,6 +13,6 @@ pub fn init(app: &tauri::App) -> AppState {
         .app_data_dir()
         .expect("resolve app data dir");
     std::fs::create_dir_all(&data_dir).expect("create app data dir");
-    let conn = crate::db::open_at(&data_dir.join("applybot.db")).expect("open applybot.db");
+    let conn = crate::db::open_at(&data_dir.join("sift.db")).expect("open sift.db");
     AppState { db: Arc::new(Mutex::new(conn)), agent: Mutex::new(None) }
 }

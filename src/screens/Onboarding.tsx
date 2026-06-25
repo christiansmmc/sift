@@ -102,10 +102,10 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
               </svg>
             </div>
             <h1 className="onb-done-title">Tudo pronto!</h1>
-            <p className="onb-done-body">Seu perfil e critérios de busca estão configurados. O applybot já pode começar a encontrar vagas para você.</p>
+            <p className="onb-done-body">Seu perfil e critérios de busca estão configurados. O Sift já pode começar a encontrar vagas para você.</p>
             <div className="onb-done-actions">
               <button className="btn" onClick={() => setStep(0)}>Revisar novamente</button>
-              <button className="btn btn-primary" onClick={onDone}>Começar a usar o applybot</button>
+              <button className="btn btn-primary" onClick={onDone}>Começar a usar o Sift</button>
             </div>
           </div>
         )}
