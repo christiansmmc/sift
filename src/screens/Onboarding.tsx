@@ -31,6 +31,7 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
         screening_json: "{}",
       };
       await api.saveProfile(profile);
+      setSaving(false);
       setStep(3);
     } catch (e) {
       setError(String(e));
