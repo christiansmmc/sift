@@ -8,6 +8,7 @@ import Jobs from "./screens/Jobs";
 import Pending from "./screens/Pending";
 import Profile from "./screens/Profile";
 import Settings from "./screens/Settings";
+import Titlebar from "./Titlebar";
 
 type Screen = "dashboard" | "jobs" | "pending" | "profile" | "settings";
 
@@ -91,47 +92,50 @@ export default function App() {
   if (!onboarded) return <Onboarding onDone={() => setOnboarded(true)} />;
 
   return (
-    <div className="app">
-      <nav className="sidebar">
-        <div className="brand">apply<span>bot</span></div>
-        <nav>
-          {NAV.map((n) => (
-            <button
-              key={n.key}
-              className={`navlink ${screen === n.key ? "active" : ""}`}
-              onClick={() => setScreen(n.key)}
-            >
-              {n.label}
-            </button>
-          ))}
+    <div className="root">
+      <Titlebar />
+      <div className="app">
+        <nav className="sidebar">
+          <div className="brand">apply<span>bot</span></div>
+          <nav>
+            {NAV.map((n) => (
+              <button
+                key={n.key}
+                className={`navlink ${screen === n.key ? "active" : ""}`}
+                onClick={() => setScreen(n.key)}
+              >
+                {n.label}
+              </button>
+            ))}
+          </nav>
+          <button className="theme-toggle" onClick={() => setThemeState(toggleTheme())}>
+            {theme === "dark" ? "☀️  Tema claro" : "🌙  Tema escuro"}
+          </button>
         </nav>
-        <button className="theme-toggle" onClick={() => setThemeState(toggleTheme())}>
-          {theme === "dark" ? "☀️  Tema claro" : "🌙  Tema escuro"}
-        </button>
-      </nav>
-      <main className="content">
-        {screen === "dashboard" && (
-          <Dashboard
-            counts={counts}
-            running={running}
-            runKind={runKind}
-            mode={mode}
-            batch={batch}
-            feed={feed}
-            error={error}
-            setMode={setMode}
-            setBatch={setBatch}
-            onStart={onStart}
-            onStop={onStop}
-            approvedCount={approvedCount}
-            onSubmitApproved={onSubmitApproved}
-          />
-        )}
-        {screen === "jobs" && <Jobs />}
-        {screen === "pending" && <Pending />}
-        {screen === "profile" && <Profile />}
-        {screen === "settings" && <Settings />}
-      </main>
+        <main className="content">
+          {screen === "dashboard" && (
+            <Dashboard
+              counts={counts}
+              running={running}
+              runKind={runKind}
+              mode={mode}
+              batch={batch}
+              feed={feed}
+              error={error}
+              setMode={setMode}
+              setBatch={setBatch}
+              onStart={onStart}
+              onStop={onStop}
+              approvedCount={approvedCount}
+              onSubmitApproved={onSubmitApproved}
+            />
+          )}
+          {screen === "jobs" && <Jobs />}
+          {screen === "pending" && <Pending />}
+          {screen === "profile" && <Profile />}
+          {screen === "settings" && <Settings />}
+        </main>
+      </div>
     </div>
   );
 }
