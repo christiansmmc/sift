@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { DashboardCounts } from "../types";
 
 interface Props {
@@ -24,6 +25,13 @@ export default function Dashboard({
     ? (runKind === "submit" ? "Enviando…" : "Buscando…")
     : "Parado";
   const statusActive = running;
+
+  const feedRef = useRef<HTMLDivElement>(null);
+  // Keep the activity feed scrolled to the newest entry as it grows.
+  useEffect(() => {
+    const el = feedRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [feed]);
 
   return (
     <section>
@@ -121,10 +129,18 @@ export default function Dashboard({
       {feed.length > 0 && (
         <div className="painel-activity">
           <div className="painel-section-label">Atividade recente</div>
-          <div className="card painel-feed-card">
+          <div className="card painel-feed-card" ref={feedRef}>
             {feed.map((line, i) => (
               <div key={i} className={`painel-feed-row${i < feed.length - 1 ? " painel-feed-row--bordered" : ""}`}>
-                <div className="painel-feed-dot" />
+                <div
+                  className={`painel-feed-dot${
+                    i === feed.length - 1
+                      ? running
+                        ? " painel-feed-dot--live"
+                        : " painel-feed-dot--last"
+                      : ""
+                  }`}
+                />
                 <div className="painel-feed-line">{line}</div>
               </div>
             ))}

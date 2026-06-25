@@ -890,3 +890,16 @@
    with the run button + status (which have no label/margin). Specificity
    (0,2,0) overrides the global label.field margin-bottom:14px (0,1,1). */
 .painel-controls-card .field { margin-bottom: 0; }
+
+/* Activity feed: the newest (last) entry's dot is colored — green and gently
+   pulsing while the agent is running ("live"), accent when idle. Appended
+   after the base .painel-feed-dot so the modifier background wins. */
+.painel-feed-dot--last { background: var(--accent); }
+.painel-feed-dot--live {
+  background: var(--ok);
+  animation: painel-feed-pulse 1.3s ease-in-out infinite;
+}
+@keyframes painel-feed-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .4; }
+}
