@@ -16,89 +16,115 @@ interface Props {
   onSubmitApproved: () => void;
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="card" style={{ flex: 1, margin: 0, textAlign: "center" }}>
-      <div style={{ fontSize: 28, fontWeight: 700 }}>{value}</div>
-      <div className="hint">{label}</div>
-    </div>
-  );
-}
-
 export default function Dashboard({
   counts, running, runKind, mode, batch, feed, error, setMode, setBatch, onStart, onStop,
   approvedCount, onSubmitApproved,
 }: Props) {
+  const statusLabel = running
+    ? (runKind === "submit" ? "Enviando…" : "Buscando…")
+    : "Parado";
+  const statusActive = running;
+
   return (
     <section>
-      <h1>Painel</h1>
+      {/* Page header */}
+      <div className="painel-header">
+        <h1>Painel</h1>
+        <p className="painel-subtitle">Controle o agente e acompanhe suas candidaturas.</p>
+      </div>
 
-      <div className="card">
-        <div style={{ display: "flex", gap: 16, alignItems: "flex-end", flexWrap: "wrap" }}>
-          <label className="field" style={{ marginBottom: 0 }}>
-            Modo
+      {/* Controls card */}
+      <div className="card painel-controls-card">
+        <label className="field painel-mode-field">
+          Modo
+          <div className="painel-select-wrap">
             <select
               value={mode}
               onChange={(e) => setMode(e.target.value as "scan" | "revisar")}
               disabled={running}
             >
               <option value="revisar">Revisar (preparar p/ aprovar)</option>
-              <option value="scan">Scan (só descobrir)</option>
+              <option value="scan">Apenas buscar vagas</option>
             </select>
-          </label>
-          <label className="field" style={{ marginBottom: 0, width: 130 }}>
-            Vagas por busca
-            <input
-              type="number"
-              min={1}
-              max={50}
-              value={batch}
-              onChange={(e) => setBatch(Number(e.target.value))}
-              disabled={running}
-            />
-          </label>
-          {running ? (
-            <button className="btn" onClick={onStop}>Parar</button>
-          ) : (
-            <button className="btn btn-primary" onClick={onStart}>Iniciar</button>
-          )}
-          {!running && approvedCount > 0 && (
-            <button className="btn btn-primary" onClick={onSubmitApproved}>
-              Enviar aprovadas ({approvedCount})
-            </button>
-          )}
-          <span className="hint" style={{ alignSelf: "center" }}>
-            {running ? (runKind === "submit" ? "🟢 Enviando…" : "🟢 Buscando…") : "⚪ Parado"}
-          </span>
+            <span className="painel-chevron">▾</span>
+          </div>
+        </label>
+
+        <label className="field painel-batch-field">
+          Vagas por busca
+          <input
+            type="number"
+            min={1}
+            max={50}
+            value={batch}
+            onChange={(e) => setBatch(Number(e.target.value))}
+            disabled={running}
+          />
+        </label>
+
+        {running ? (
+          <button className="btn btn-danger painel-run-btn" onClick={onStop}>Parar</button>
+        ) : (
+          <button className="btn btn-primary painel-run-btn" onClick={onStart}>Iniciar</button>
+        )}
+
+        {!running && approvedCount > 0 && (
+          <button className="btn btn-primary" onClick={onSubmitApproved}>
+            Enviar aprovadas ({approvedCount})
+          </button>
+        )}
+
+        <div className="painel-status">
+          <div className={`painel-status-dot${statusActive ? " painel-status-dot--active" : ""}`} />
+          <span className="painel-status-label">{statusLabel}</span>
         </div>
-        {error && <p className="hint" style={{ color: "var(--danger)" }}>{error}</p>}
+
+        {error && <p className="painel-error">{error}</p>}
       </div>
 
+      {/* Count cards */}
       {counts && (
-        <div style={{ display: "flex", gap: 12, margin: "12px 0" }}>
-          <Stat label="Encontradas" value={counts.found} />
-          <Stat label="Aguardando aprovação" value={counts.awaiting_approval} />
-          <Stat label="Enviadas" value={counts.submitted} />
-          <Stat label="Pendências" value={counts.pending} />
+        <div className="painel-counts">
+          <div className="card painel-count-card">
+            <div className="painel-count-card-label">
+              <div className="painel-count-dot painel-count-dot--info" />
+              <span>Encontradas</span>
+            </div>
+            <div className="painel-count-value">{counts.found}</div>
+          </div>
+          <div className="card painel-count-card">
+            <div className="painel-count-card-label">
+              <div className="painel-count-dot painel-count-dot--warn" />
+              <span>Aguardando aprovação</span>
+            </div>
+            <div className="painel-count-value">{counts.awaiting_approval}</div>
+          </div>
+          <div className="card painel-count-card">
+            <div className="painel-count-card-label">
+              <div className="painel-count-dot painel-count-dot--ok" />
+              <span>Enviadas</span>
+            </div>
+            <div className="painel-count-value">{counts.submitted}</div>
+          </div>
+          <div className="card painel-count-card">
+            <div className="painel-count-card-label">
+              <div className="painel-count-dot painel-count-dot--faint" />
+              <span>Pendências</span>
+            </div>
+            <div className="painel-count-value">{counts.pending}</div>
+          </div>
         </div>
       )}
 
+      {/* Activity feed */}
       {feed.length > 0 && (
-        <div className="card">
-          <h2>Atividade</h2>
-          <div
-            style={{
-              maxHeight: 220,
-              overflowY: "auto",
-              display: "flex",
-              flexDirection: "column",
-              gap: 4,
-              fontSize: 13,
-            }}
-          >
+        <div className="painel-activity">
+          <div className="painel-section-label">Atividade recente</div>
+          <div className="card painel-feed-card">
             {feed.map((line, i) => (
-              <div key={i} style={{ color: "var(--text-muted)" }}>
-                <span style={{ color: "var(--accent)" }}>›</span> {line}
+              <div key={i} className={`painel-feed-row${i < feed.length - 1 ? " painel-feed-row--bordered" : ""}`}>
+                <div className="painel-feed-dot" />
+                <div className="painel-feed-line">{line}</div>
               </div>
             ))}
           </div>

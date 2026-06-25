@@ -1,1 +1,195 @@
 /* screens: per-screen layout and overrides */
+
+/* ── Painel (Dashboard) ───────────────────────────────────────────────── */
+
+/* Page header */
+.painel-header {
+  margin-bottom: 20px;
+}
+.painel-header h1 {
+  margin: 0;
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: -.5px;
+}
+.painel-subtitle {
+  margin: 5px 0 0;
+  font-size: 13.5px;
+  color: var(--text-muted);
+}
+
+/* Controls card: horizontal row of fields + button + status */
+.painel-controls-card {
+  display: flex;
+  align-items: flex-end;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+/* Mode field: grows to fill available space */
+.painel-mode-field {
+  min-width: 240px;
+  flex: 1;
+  margin-bottom: 0;
+}
+
+/* Select wrapper: holds the select + custom chevron */
+.painel-select-wrap {
+  position: relative;
+}
+.painel-select-wrap select {
+  width: 100%;
+}
+.painel-chevron {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--text-faint);
+  font-size: 11px;
+}
+
+/* Batch field: fixed width */
+.painel-batch-field {
+  width: 140px;
+  margin-bottom: 0;
+}
+.painel-batch-field input {
+  width: 100%;
+  font-family: "Geist Mono", monospace;
+}
+
+/* Run button: aligned to bottom of flex row */
+.painel-run-btn {
+  flex: none;
+}
+
+/* Status indicator: dot + label */
+.painel-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 10px;
+}
+.painel-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border-strong);
+  flex: none;
+  transition: background .2s;
+}
+.painel-status-dot--active {
+  background: var(--ok);
+}
+.painel-status-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* Error message */
+.painel-error {
+  width: 100%;
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--danger);
+}
+
+/* Count cards: 4-column grid */
+.painel-counts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 13px;
+  margin-top: 16px;
+}
+
+/* Individual count card overrides */
+.painel-count-card {
+  margin: 0;
+  padding: 17px 18px;
+}
+
+/* Count card label row: colored dot + text */
+.painel-count-card-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 11px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* Colored indicator dots for count cards */
+.painel-count-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 3px;
+  flex: none;
+}
+.painel-count-dot--info  { background: var(--info); }
+.painel-count-dot--warn  { background: var(--warn); }
+.painel-count-dot--ok    { background: var(--ok); }
+.painel-count-dot--faint { background: var(--text-faint); }
+
+/* Count value: monospace, large */
+.painel-count-value {
+  font-family: "Geist Mono", monospace;
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: -1px;
+  color: var(--text);
+}
+
+/* Activity section */
+.painel-activity {
+  margin-top: 22px;
+}
+
+/* Section label: uppercase eyebrow */
+.painel-section-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 12px;
+}
+
+/* Feed card: tight padding, no gap between rows */
+.painel-feed-card {
+  padding: 6px 18px;
+  margin: 0;
+}
+
+/* Each feed row: dot + text, separated by border */
+.painel-feed-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 13px 0;
+}
+.painel-feed-row--bordered {
+  border-bottom: 1px solid var(--border);
+}
+
+/* Feed row dot */
+.painel-feed-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-faint);
+  flex: none;
+  margin-top: 5px;
+}
+
+/* Feed row text */
+.painel-feed-line {
+  flex: 1;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.5;
+}
