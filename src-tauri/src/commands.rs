@@ -200,6 +200,17 @@ pub fn reject_application(state: State<AppState>, id: i64) -> CmdResult<()> {
 }
 
 #[tauri::command]
+pub fn update_application_content(
+    state: State<AppState>,
+    id: i64,
+    cover_letter: String,
+    answers_json: String,
+) -> CmdResult<()> {
+    let conn = state.db.lock().map_err(err)?;
+    applications::update_content(&conn, id, &cover_letter, &answers_json).map_err(err)
+}
+
+#[tauri::command]
 pub fn count_approved(state: State<AppState>) -> CmdResult<i64> {
     let conn = state.db.lock().map_err(err)?;
     applications::count_approved(&conn).map_err(err)

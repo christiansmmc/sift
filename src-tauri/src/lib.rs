@@ -37,6 +37,7 @@ pub fn run() {
             commands::list_found_jobs,
             commands::approve_application,
             commands::reject_application,
+            commands::update_application_content,
             commands::count_approved,
             commands::list_approved,
             commands::submit_approved,
