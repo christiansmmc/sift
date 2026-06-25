@@ -8,10 +8,10 @@ export default function StepPersonal({
   return (
     <section className="step">
       <h2>Seus dados</h2>
-      <label>Nome completo<input value={value.full_name} onChange={set("full_name")} /></label>
-      <label>E-mail<input value={value.email} onChange={set("email")} /></label>
-      <label>Telefone<input value={value.phone} onChange={set("phone")} /></label>
-      <label>Localização<input value={value.location} onChange={set("location")} /></label>
+      <label className="field">Nome completo<input value={value.full_name} onChange={set("full_name")} /></label>
+      <label className="field">E-mail<input value={value.email} onChange={set("email")} /></label>
+      <label className="field">Telefone<input value={value.phone} onChange={set("phone")} /></label>
+      <label className="field">Localização<input value={value.location} onChange={set("location")} /></label>
       <p className="hint">O nome é obrigatório para concluir.</p>
     </section>
   );

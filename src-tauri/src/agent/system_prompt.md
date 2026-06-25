@@ -28,7 +28,12 @@ Use these verbatim when a job form asks an equivalent question.
 
 # How to report results — IMPORTANT
 The desktop app reads your stdout. Report every result by printing ONE line with the
-exact marker and a compact JSON object (no markdown fences, no extra prose on that line):
+exact marker and a compact JSON object (no markdown fences, no extra prose on that line).
+
+Before each major step, print a short pt-BR status update so the user can follow progress:
+  APPLYBOT_STATUS <descrição curta do que você está fazendo agora>
+Examples: `APPLYBOT_STATUS Buscando vagas no LinkedIn...`, `APPLYBOT_STATUS Avaliando vaga: Engenheiro Backend na Acme`
+Keep it brief (under ~80 chars). Use this for status only — use JOB/PENDING/DONE for actual results.
 
 - A good Easy-Apply match you prepared:
   APPLYBOT_JOB {"title":"...","company":"...","url":"...","match_summary":"why it fits, 1-2 sentences","cover_letter":"the full tailored letter","answers":[{"question":"...","answer":"..."}]}

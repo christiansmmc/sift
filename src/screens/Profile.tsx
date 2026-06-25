@@ -81,20 +81,21 @@ export default function Profile() {
       <h1>Perfil</h1>
 
       <h2>Seus dados</h2>
-      <label>Nome completo<input value={profile.full_name} onChange={(e) => setField("full_name", e.target.value)} /></label>
-      <label>E-mail<input value={profile.email} onChange={(e) => setField("email", e.target.value)} /></label>
-      <label>Telefone<input value={profile.phone} onChange={(e) => setField("phone", e.target.value)} /></label>
-      <label>Localização<input value={profile.location} onChange={(e) => setField("location", e.target.value)} /></label>
+      <label className="field">Nome completo<input value={profile.full_name} onChange={(e) => setField("full_name", e.target.value)} /></label>
+      <label className="field">E-mail<input value={profile.email} onChange={(e) => setField("email", e.target.value)} /></label>
+      <label className="field">Telefone<input value={profile.phone} onChange={(e) => setField("phone", e.target.value)} /></label>
+      <label className="field">Localização<input value={profile.location} onChange={(e) => setField("location", e.target.value)} /></label>
+
       <h2>Currículo</h2>
-      <label><textarea rows={10} value={profile.cv_text} onChange={(e) => setField("cv_text", e.target.value)} /></label>
-      <button onClick={analyze} disabled={busy || !profile.cv_text.trim()}>
+      <label className="field"><textarea rows={10} value={profile.cv_text} onChange={(e) => setField("cv_text", e.target.value)} /></label>
+      <button className="btn" onClick={analyze} disabled={busy || !profile.cv_text.trim()}>
         {busy ? "Analisando…" : "Analisar com Claude"}
       </button>
 
       <h2>O que você busca</h2>
-      <label>Cargo<input value={criteria.role} onChange={(e) => setCrit("role", e.target.value)} /></label>
-      <label>Senioridade<input value={criteria.seniority} onChange={(e) => setCrit("seniority", e.target.value)} placeholder="junior / mid / senior / lead" /></label>
-      <label>Modelo de trabalho
+      <label className="field">Cargo<input value={criteria.role} onChange={(e) => setCrit("role", e.target.value)} /></label>
+      <label className="field">Senioridade<input value={criteria.seniority} onChange={(e) => setCrit("seniority", e.target.value)} placeholder="junior / mid / senior / lead" /></label>
+      <label className="field">Modelo de trabalho
         <select value={criteria.work_model} onChange={(e) => setCrit("work_model", e.target.value)}>
           <option value="">Indiferente</option>
           <option value="remote">Remoto</option>
@@ -102,36 +103,36 @@ export default function Profile() {
           <option value="onsite">Presencial</option>
         </select>
       </label>
-      <label>Localizações (vírgula)
+      <label className="field">Localizações (vírgula)
         <input value={criteria.locations.join(", ")}
           onChange={(e) => setCrit("locations", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} />
       </label>
-      <label>Salário mínimo (R$)
+      <label className="field">Salário mínimo (R$)
         <input type="number" value={criteria.salary_min ?? ""}
           onChange={(e) => setCrit("salary_min", e.target.value === "" ? null : Number(e.target.value))} />
       </label>
-      <label>Red-lines (vírgula)
+      <label className="field">Red-lines (vírgula)
         <input value={criteria.red_lines.join(", ")}
           onChange={(e) => setCrit("red_lines", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} />
       </label>
 
       <h2>Dados de triagem</h2>
       <p className="hint">Respostas comuns que vagas pedem. O agente usa isto para responder sem te incomodar.</p>
-      <label>Nível de inglês<input value={screening.english_level} onChange={(e) => setScreen("english_level", e.target.value)} placeholder="Básico / Intermediário / Avançado / Fluente" /></label>
-      <label>Pretensão salarial<input value={screening.salary_expectation} onChange={(e) => setScreen("salary_expectation", e.target.value)} placeholder="ex.: 12000" /></label>
-      <label>Moeda
+      <label className="field">Nível de inglês<input value={screening.english_level} onChange={(e) => setScreen("english_level", e.target.value)} placeholder="Básico / Intermediário / Avançado / Fluente" /></label>
+      <label className="field">Pretensão salarial<input value={screening.salary_expectation} onChange={(e) => setScreen("salary_expectation", e.target.value)} placeholder="ex.: 12000" /></label>
+      <label className="field">Moeda
         <select value={screening.salary_currency} onChange={(e) => setScreen("salary_currency", e.target.value)}>
           <option value="">—</option><option value="BRL">BRL</option><option value="USD">USD</option><option value="EUR">EUR</option>
         </select>
       </label>
-      <label>Endereço<input value={screening.address} onChange={(e) => setScreen("address", e.target.value)} /></label>
-      <label>CEP<input value={screening.postal_code} onChange={(e) => setScreen("postal_code", e.target.value)} /></label>
-      <label>Autorização de trabalho<input value={screening.work_authorization} onChange={(e) => setScreen("work_authorization", e.target.value)} placeholder="ex.: CLT, PJ, cidadania, visto" /></label>
-      <label>Disponibilidade<input value={screening.availability} onChange={(e) => setScreen("availability", e.target.value)} placeholder="ex.: imediata, 30 dias" /></label>
+      <label className="field">Endereço<input value={screening.address} onChange={(e) => setScreen("address", e.target.value)} /></label>
+      <label className="field">CEP<input value={screening.postal_code} onChange={(e) => setScreen("postal_code", e.target.value)} /></label>
+      <label className="field">Autorização de trabalho<input value={screening.work_authorization} onChange={(e) => setScreen("work_authorization", e.target.value)} placeholder="ex.: CLT, PJ, cidadania, visto" /></label>
+      <label className="field">Disponibilidade<input value={screening.availability} onChange={(e) => setScreen("availability", e.target.value)} placeholder="ex.: imediata, 30 dias" /></label>
 
       <div className="prof-actions">
-        <button onClick={save} disabled={busy}>Salvar</button>
-        {status && <span className="prof-status">{status}</span>}
+        <button className="btn btn-primary" onClick={save} disabled={busy}>Salvar</button>
+        {status && <span className="hint">{status}</span>}
       </div>
     </section>
   );

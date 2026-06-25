@@ -7,6 +7,15 @@ pub const JOB: &str = "APPLYBOT_JOB";
 pub const PENDING: &str = "APPLYBOT_PENDING";
 pub const LOGIN_REQUIRED: &str = "APPLYBOT_LOGIN_REQUIRED";
 pub const DONE: &str = "APPLYBOT_DONE";
+pub const STATUS: &str = "APPLYBOT_STATUS";
+
+/// Parse a `APPLYBOT_STATUS` line and return the status text, or `None` if the
+/// line is not a status marker or the text after stripping the prefix is empty.
+pub fn parse_status(line: &str) -> Option<String> {
+    let rest = line.trim().strip_prefix(STATUS)?;
+    let text = rest.trim().to_string();
+    if text.is_empty() { None } else { Some(text) }
+}
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct Answer {
@@ -108,5 +117,25 @@ mod tests {
         assert_eq!(parse_line("I am now searching LinkedIn..."), None);
         assert_eq!(parse_line("APPLYBOT_JOB {not json}"), None);
         assert_eq!(parse_line(""), None);
+        // STATUS lines must NOT be treated as AgentEvents by parse_line
+        assert_eq!(parse_line("APPLYBOT_STATUS Buscando vagas no LinkedIn..."), None);
+    }
+
+    #[test]
+    fn parses_status_text() {
+        assert_eq!(
+            parse_status("APPLYBOT_STATUS Buscando vagas no LinkedIn..."),
+            Some("Buscando vagas no LinkedIn...".to_string())
+        );
+        assert_eq!(
+            parse_status("  APPLYBOT_STATUS   Com espaços extras  "),
+            Some("Com espaços extras".to_string())
+        );
+        // Empty after prefix → None
+        assert_eq!(parse_status("APPLYBOT_STATUS"), None);
+        assert_eq!(parse_status("APPLYBOT_STATUS   "), None);
+        // Non-status line → None
+        assert_eq!(parse_status("APPLYBOT_JOB {...}"), None);
+        assert_eq!(parse_status(""), None);
     }
 }
