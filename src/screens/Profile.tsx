@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import type { Criteria, Profile as ProfileT, Screening } from "../types";
-import "../profile.css";
 
 const EMPTY_CRITERIA: Criteria = {
   role: "", seniority: "", work_model: "", locations: [], salary_min: null, red_lines: [],
@@ -20,6 +19,12 @@ function parseScreening(json: string): Screening {
   try { return { ...EMPTY_SCREENING, ...JSON.parse(json) }; } catch { return EMPTY_SCREENING; }
 }
 
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  return parts.slice(0, 2).map((s) => s[0].toUpperCase()).join("");
+}
+
 export default function Profile() {
   const [profile, setProfile] = useState<ProfileT | null>(null);
   const [criteria, setCriteria] = useState<Criteria>(EMPTY_CRITERIA);
@@ -35,7 +40,14 @@ export default function Profile() {
     });
   }, []);
 
-  if (!profile) return <section className="prof"><h1>Perfil</h1><p>Carregando…</p></section>;
+  if (!profile) return (
+    <section className="perfil">
+      <div className="perfil-header">
+        <h1 className="perfil-title">Perfil</h1>
+      </div>
+      <p>Carregando…</p>
+    </section>
+  );
 
   const setField = (k: keyof ProfileT, v: string) => setProfile({ ...profile, [k]: v });
   const setCrit = <K extends keyof Criteria,>(k: K, v: Criteria[K]) => setCriteria({ ...criteria, [k]: v });
@@ -77,61 +89,89 @@ export default function Profile() {
   }
 
   return (
-    <section className="prof">
-      <h1>Perfil</h1>
+    <section className="perfil">
+      {/* Page header */}
+      <div className="perfil-header">
+        <h1 className="perfil-title">Perfil</h1>
+        <p className="perfil-subtitle">O agente usa estes dados para preencher e personalizar candidaturas.</p>
+      </div>
 
-      <h2>Seus dados</h2>
-      <label className="field">Nome completo<input value={profile.full_name} onChange={(e) => setField("full_name", e.target.value)} /></label>
-      <label className="field">E-mail<input value={profile.email} onChange={(e) => setField("email", e.target.value)} /></label>
-      <label className="field">Telefone<input value={profile.phone} onChange={(e) => setField("phone", e.target.value)} /></label>
-      <label className="field">Localização<input value={profile.location} onChange={(e) => setField("location", e.target.value)} /></label>
+      {/* Identity card */}
+      <div className="card perfil-avatar-card">
+        <div className="perfil-avatar">{initials(profile.full_name)}</div>
+        <div>
+          <div className="perfil-avatar-name">{profile.full_name || "—"}</div>
+          <div className="perfil-avatar-location">{profile.location || "—"}</div>
+        </div>
+      </div>
 
-      <h2>Currículo</h2>
-      <label className="field"><textarea rows={10} value={profile.cv_text} onChange={(e) => setField("cv_text", e.target.value)} /></label>
-      <button className="btn" onClick={analyze} disabled={busy || !profile.cv_text.trim()}>
-        {busy ? "Analisando…" : "Analisar com Claude"}
-      </button>
+      {/* Seus dados */}
+      <div className="card">
+        <div className="perfil-section-label">Seus dados</div>
+        <div className="perfil-fields-grid">
+          <label className="field">Nome completo<input value={profile.full_name} onChange={(e) => setField("full_name", e.target.value)} /></label>
+          <label className="field">E-mail<input value={profile.email} onChange={(e) => setField("email", e.target.value)} /></label>
+          <label className="field">Telefone<input value={profile.phone} onChange={(e) => setField("phone", e.target.value)} /></label>
+          <label className="field">Localização<input value={profile.location} onChange={(e) => setField("location", e.target.value)} /></label>
+        </div>
+      </div>
 
-      <h2>O que você busca</h2>
-      <label className="field">Cargo<input value={criteria.role} onChange={(e) => setCrit("role", e.target.value)} /></label>
-      <label className="field">Senioridade<input value={criteria.seniority} onChange={(e) => setCrit("seniority", e.target.value)} placeholder="junior / mid / senior / lead" /></label>
-      <label className="field">Modelo de trabalho
-        <select value={criteria.work_model} onChange={(e) => setCrit("work_model", e.target.value)}>
-          <option value="">Indiferente</option>
-          <option value="remote">Remoto</option>
-          <option value="hybrid">Híbrido</option>
-          <option value="onsite">Presencial</option>
-        </select>
-      </label>
-      <label className="field">Localizações (vírgula)
-        <input value={criteria.locations.join(", ")}
-          onChange={(e) => setCrit("locations", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} />
-      </label>
-      <label className="field">Salário mínimo (R$)
-        <input type="number" value={criteria.salary_min ?? ""}
-          onChange={(e) => setCrit("salary_min", e.target.value === "" ? null : Number(e.target.value))} />
-      </label>
-      <label className="field">Red-lines (vírgula)
-        <input value={criteria.red_lines.join(", ")}
-          onChange={(e) => setCrit("red_lines", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} />
-      </label>
+      {/* Currículo */}
+      <div className="card">
+        <div className="perfil-section-label">Currículo</div>
+        <label className="field"><textarea rows={10} value={profile.cv_text} onChange={(e) => setField("cv_text", e.target.value)} /></label>
+        <button className="btn" onClick={analyze} disabled={busy || !profile.cv_text.trim()}>
+          {busy ? "Analisando…" : "Analisar com Claude"}
+        </button>
+      </div>
 
-      <h2>Dados de triagem</h2>
-      <p className="hint">Respostas comuns que vagas pedem. O agente usa isto para responder sem te incomodar.</p>
-      <label className="field">Nível de inglês<input value={screening.english_level} onChange={(e) => setScreen("english_level", e.target.value)} placeholder="Básico / Intermediário / Avançado / Fluente" /></label>
-      <label className="field">Pretensão salarial<input value={screening.salary_expectation} onChange={(e) => setScreen("salary_expectation", e.target.value)} placeholder="ex.: 12000" /></label>
-      <label className="field">Moeda
-        <select value={screening.salary_currency} onChange={(e) => setScreen("salary_currency", e.target.value)}>
-          <option value="">—</option><option value="BRL">BRL</option><option value="USD">USD</option><option value="EUR">EUR</option>
-        </select>
-      </label>
-      <label className="field">Endereço<input value={screening.address} onChange={(e) => setScreen("address", e.target.value)} /></label>
-      <label className="field">CEP<input value={screening.postal_code} onChange={(e) => setScreen("postal_code", e.target.value)} /></label>
-      <label className="field">Autorização de trabalho<input value={screening.work_authorization} onChange={(e) => setScreen("work_authorization", e.target.value)} placeholder="ex.: CLT, PJ, cidadania, visto" /></label>
-      <label className="field">Disponibilidade<input value={screening.availability} onChange={(e) => setScreen("availability", e.target.value)} placeholder="ex.: imediata, 30 dias" /></label>
+      {/* O que você busca */}
+      <div className="card">
+        <div className="perfil-section-label">O que você busca</div>
+        <label className="field">Cargo<input value={criteria.role} onChange={(e) => setCrit("role", e.target.value)} /></label>
+        <label className="field">Senioridade<input value={criteria.seniority} onChange={(e) => setCrit("seniority", e.target.value)} placeholder="junior / mid / senior / lead" /></label>
+        <label className="field">Modelo de trabalho
+          <select value={criteria.work_model} onChange={(e) => setCrit("work_model", e.target.value)}>
+            <option value="">Indiferente</option>
+            <option value="remote">Remoto</option>
+            <option value="hybrid">Híbrido</option>
+            <option value="onsite">Presencial</option>
+          </select>
+        </label>
+        <label className="field">Localizações (vírgula)
+          <input value={criteria.locations.join(", ")}
+            onChange={(e) => setCrit("locations", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} />
+        </label>
+        <label className="field">Salário mínimo (R$)
+          <input type="number" value={criteria.salary_min ?? ""}
+            onChange={(e) => setCrit("salary_min", e.target.value === "" ? null : Number(e.target.value))} />
+        </label>
+        <label className="field">Red-lines (vírgula)
+          <input value={criteria.red_lines.join(", ")}
+            onChange={(e) => setCrit("red_lines", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} />
+        </label>
+      </div>
 
-      <div className="prof-actions">
-        <button className="btn btn-primary" onClick={save} disabled={busy}>Salvar</button>
+      {/* Dados de triagem */}
+      <div className="card">
+        <div className="perfil-section-label">Dados de triagem</div>
+        <p className="hint">Respostas comuns que vagas pedem. O agente usa isto para responder sem te incomodar.</p>
+        <label className="field">Nível de inglês<input value={screening.english_level} onChange={(e) => setScreen("english_level", e.target.value)} placeholder="Básico / Intermediário / Avançado / Fluente" /></label>
+        <label className="field">Pretensão salarial<input value={screening.salary_expectation} onChange={(e) => setScreen("salary_expectation", e.target.value)} placeholder="ex.: 12000" /></label>
+        <label className="field">Moeda
+          <select value={screening.salary_currency} onChange={(e) => setScreen("salary_currency", e.target.value)}>
+            <option value="">—</option><option value="BRL">BRL</option><option value="USD">USD</option><option value="EUR">EUR</option>
+          </select>
+        </label>
+        <label className="field">Endereço<input value={screening.address} onChange={(e) => setScreen("address", e.target.value)} /></label>
+        <label className="field">CEP<input value={screening.postal_code} onChange={(e) => setScreen("postal_code", e.target.value)} /></label>
+        <label className="field">Autorização de trabalho<input value={screening.work_authorization} onChange={(e) => setScreen("work_authorization", e.target.value)} placeholder="ex.: CLT, PJ, cidadania, visto" /></label>
+        <label className="field">Disponibilidade<input value={screening.availability} onChange={(e) => setScreen("availability", e.target.value)} placeholder="ex.: imediata, 30 dias" /></label>
+      </div>
+
+      {/* Save actions */}
+      <div className="perfil-actions">
+        <button className="btn btn-primary" onClick={save} disabled={busy}>Salvar perfil</button>
         {status && <span className="hint">{status}</span>}
       </div>
     </section>

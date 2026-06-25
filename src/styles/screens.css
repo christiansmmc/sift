@@ -456,3 +456,98 @@
   color: var(--text-muted);
   line-height: 1.55;
 }
+
+/* ── Perfil (Profile) ──────────────────────────────────────────────────── */
+
+/* Section wrapper: flex column with 16px gap between cards; override
+   .card default margin so gap alone controls spacing */
+.perfil {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.perfil .card {
+  margin: 0;
+}
+
+/* Page header: margin-bottom + gap totals ~20px to first card */
+.perfil-header {
+  margin-bottom: 4px;
+}
+.perfil-title {
+  margin: 0;
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: -.5px;
+}
+.perfil-subtitle {
+  margin: 5px 0 0;
+  font-size: 13.5px;
+  color: var(--text-muted);
+}
+
+/* Identity card: flex row; custom padding (tighter than .card default) */
+.perfil-avatar-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 16px 18px;
+}
+
+/* Gradient avatar circle showing name initials */
+.perfil-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    var(--accent),
+    color-mix(in srgb, var(--accent) 55%, var(--accent-grad-end))
+  );
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 17px;
+  flex: none;
+  user-select: none;
+}
+
+.perfil-avatar-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+.perfil-avatar-location {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* Uppercase eyebrow label shared by all perfil card sections */
+.perfil-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 16px;
+}
+
+/* 2-column grid for personal data fields (Seus dados card) */
+.perfil-fields-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+.perfil-fields-grid .field {
+  margin-bottom: 0;
+}
+
+/* Save / status row: right-aligned */
+.perfil-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+}
