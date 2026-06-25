@@ -210,3 +210,165 @@
   color: var(--text);
   line-height: 1.5;
 }
+
+/* ── Vagas (Jobs) ─────────────────────────────────────────────────────────── */
+
+/* Page header */
+.vagas-header {
+  margin-bottom: 20px;
+}
+.vagas-title {
+  margin: 0;
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: -.5px;
+}
+.vagas-subtitle {
+  margin: 5px 0 0;
+  font-size: 13.5px;
+  color: var(--text-muted);
+}
+
+/* Tab content area */
+.vagas-tab-content {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Empty state hint */
+.vagas-empty {
+  margin: 8px 0 0;
+}
+
+/* Job card layout */
+.vagas-card {
+  margin: 0 0 12px;
+}
+
+/* Card header: meta row + status pill */
+.vagas-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+/* Meta: title + company + link in a row */
+.vagas-card-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+.vagas-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.vagas-card-company {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.vagas-card-link {
+  font-size: 13px;
+  color: var(--accent);
+  text-decoration: none;
+}
+.vagas-card-link:hover {
+  text-decoration: underline;
+}
+
+/* Section eyebrow label (CARTA DE APRESENTAÇÃO, RESPOSTAS) */
+.vagas-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin-bottom: 7px;
+}
+
+/* Answers list */
+.vagas-answers-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.vagas-answer-item {
+  display: flex;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+}
+.vagas-answer-q {
+  font-weight: 600;
+  color: var(--text-muted);
+  flex: none;
+}
+.vagas-answer-sep {
+  color: var(--text-faint);
+  flex: none;
+}
+.vagas-answer-a {
+  color: var(--text);
+}
+
+/* Action buttons row */
+.vagas-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+/* Found jobs card: no internal padding gap */
+.vagas-found-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Each found job row */
+.vagas-found-row {
+  padding: 13px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.vagas-found-row--bordered {
+  border-bottom: 1px solid var(--border);
+}
+
+/* Found row: title + company + pill in one line */
+.vagas-found-main {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+.vagas-found-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+}
+.vagas-found-title:hover {
+  text-decoration: underline;
+}
+.vagas-found-company {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* Match summary paragraph */
+.vagas-found-summary {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
