@@ -206,6 +206,12 @@ pub fn count_approved(state: State<AppState>) -> CmdResult<i64> {
 }
 
 #[tauri::command]
+pub fn list_approved(state: State<AppState>) -> CmdResult<Vec<applications::ReviewItem>> {
+    let conn = state.db.lock().map_err(err)?;
+    applications::approved_queue(&conn).map_err(err)
+}
+
+#[tauri::command]
 pub fn submit_approved(state: State<AppState>, app: tauri::AppHandle) -> CmdResult<()> {
     let mut slot = state.agent.lock().map_err(err)?;
     if slot.as_ref().map(|h| h.is_running()).unwrap_or(false) {

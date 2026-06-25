@@ -12,10 +12,12 @@ function openExternal(e: React.MouseEvent, url: string) {
 
 export default function Jobs() {
   const [review, setReview] = useState<ReviewItem[]>([]);
+  const [approved, setApproved] = useState<ReviewItem[]>([]);
   const [found, setFound] = useState<Job[]>([]);
 
   async function refresh() {
     setReview(await api.listReviewQueue());
+    setApproved(await api.listApproved());
     setFound(await api.listFoundJobs());
   }
   useEffect(() => { refresh(); }, []);
@@ -54,6 +56,22 @@ export default function Jobs() {
             <button className="btn btn-primary" onClick={() => approve(r.application_id)}>Aprovar</button>
             <button className="btn btn-ghost" onClick={() => reject(r.application_id)}>Rejeitar</button>
           </div>
+        </div>
+      ))}
+
+      <h2>Aprovadas (aguardando envio) ({approved.length})</h2>
+      {approved.length === 0 && <p className="hint">Nenhuma candidatura aprovada aguardando envio.</p>}
+      {approved.map((r) => (
+        <div key={r.application_id} className="card">
+          <div>
+            <strong>{r.job_title}</strong>
+            {" "}<span style={{ color: "var(--text-muted)" }}>{r.company}</span>
+            {" "}<a href={r.url} onClick={(e) => openExternal(e, r.url)}>ver vaga</a>
+          </div>
+          <details style={{ margin: "8px 0" }}>
+            <summary>Carta de apresentação</summary>
+            <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", background: "var(--surface-2)", padding: "10px", borderRadius: "var(--radius)", marginTop: 8 }}>{r.cover_letter}</pre>
+          </details>
         </div>
       ))}
 

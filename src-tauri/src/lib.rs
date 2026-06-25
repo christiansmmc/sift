@@ -38,6 +38,7 @@ pub fn run() {
             commands::approve_application,
             commands::reject_application,
             commands::count_approved,
+            commands::list_approved,
             commands::submit_approved,
         ])
         .run(tauri::generate_context!())

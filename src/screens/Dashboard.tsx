@@ -11,6 +11,8 @@ interface Props {
   setBatch: (n: number) => void;
   onStart: () => void;
   onStop: () => void;
+  approvedCount: number;
+  onSubmitApproved: () => void;
 }
 
 function Stat({ label, value }: { label: string; value: number }) {
@@ -24,6 +26,7 @@ function Stat({ label, value }: { label: string; value: number }) {
 
 export default function Dashboard({
   counts, running, mode, batch, feed, error, setMode, setBatch, onStart, onStop,
+  approvedCount, onSubmitApproved,
 }: Props) {
   return (
     <section>
@@ -57,6 +60,11 @@ export default function Dashboard({
             <button className="btn" onClick={onStop}>Parar</button>
           ) : (
             <button className="btn btn-primary" onClick={onStart}>Iniciar</button>
+          )}
+          {!running && approvedCount > 0 && (
+            <button className="btn btn-primary" onClick={onSubmitApproved}>
+              Enviar aprovadas ({approvedCount})
+            </button>
           )}
           <span className="hint" style={{ alignSelf: "center" }}>
             {running ? "🟢 Buscando…" : "⚪ Parado"}

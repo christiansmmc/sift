@@ -145,6 +145,26 @@ pub fn count_approved(conn: &Connection) -> rusqlite::Result<i64> {
     conn.query_row("SELECT COUNT(*) FROM applications WHERE status='approved'", [], |r| r.get(0))
 }
 
+pub fn approved_queue(conn: &Connection) -> rusqlite::Result<Vec<ReviewItem>> {
+    let mut stmt = conn.prepare(
+        "SELECT a.id, j.title, j.company, j.url, \
+                COALESCE(a.cover_letter,''), COALESCE(a.answers_json,'[]') \
+         FROM applications a JOIN jobs j ON a.job_id = j.id \
+         WHERE a.status = 'approved' ORDER BY a.id DESC",
+    )?;
+    let rows = stmt.query_map([], |r| {
+        Ok(ReviewItem {
+            application_id: r.get(0)?,
+            job_title: r.get(1)?,
+            company: r.get(2)?,
+            url: r.get(3)?,
+            cover_letter: r.get(4)?,
+            answers_json: r.get(5)?,
+        })
+    })?;
+    rows.collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
