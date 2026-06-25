@@ -135,6 +135,11 @@ fn spawn_agent(
     for a in agent_args() {
         cmd.arg(a);
     }
+    let model = {
+        let conn = db.lock().map_err(|e| e.to_string())?;
+        crate::db::settings::get_or(&conn, "agent_model", "sonnet").map_err(|e| e.to_string())?
+    };
+    cmd.arg("--model").arg(&model);
     cmd.stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());

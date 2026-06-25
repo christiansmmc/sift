@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { api } from "../lib/api";
 
 type Style = "short" | "balanced" | "detailed" | "custom";
@@ -15,12 +15,20 @@ export default function Settings() {
   const [custom, setCustom] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [follow, setFollow] = useState(false);
+  const [model, setModel] = useState("sonnet");
 
   useEffect(() => {
     api.getSetting("cover_letter_style").then((v) => { if (v) setStyle(v as Style); });
     api.getSetting("cover_letter_custom").then((v) => { if (v) setCustom(v); });
     api.getSetting("follow_company").then((v) => { setFollow(v === "true"); });
+    api.getSetting("agent_model").then((v) => { if (v) setModel(v); });
   }, []);
+
+  const handleModelChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setModel(value);
+    await api.setSetting("agent_model", value);
+  };
 
   async function save() {
     setStatus(null);
@@ -72,6 +80,19 @@ export default function Settings() {
             onChange={async (e) => { setFollow(e.target.checked); await api.setSetting("follow_company", e.target.checked ? "true" : "false"); }} />
           Seguir a empresa ao se candidatar
         </label>
+      </div>
+
+      <div className="card">
+        <h3>Agente</h3>
+        <div className="field">
+          <label>Modelo do agente</label>
+          <select value={model} onChange={handleModelChange}>
+            <option value="opus">Opus 4.8 (melhor qualidade)</option>
+            <option value="sonnet">Sonnet 4.6 (rápido — recomendado)</option>
+            <option value="haiku">Haiku 4.5 (mais rápido, menos confiável)</option>
+          </select>
+          <p className="hint">Aplica-se à busca, envio e análise de currículo.</p>
+        </div>
       </div>
     </section>
   );

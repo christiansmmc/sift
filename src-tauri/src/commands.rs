@@ -88,8 +88,12 @@ pub async fn parse_resume(path: String) -> CmdResult<String> {
 }
 
 #[tauri::command]
-pub async fn analyze_cv(cv_text: String) -> CmdResult<crate::cv_analysis::CvAnalysis> {
-    tauri::async_runtime::spawn_blocking(move || crate::cv_analysis::analyze(&cv_text))
+pub async fn analyze_cv(state: State<'_, AppState>, cv_text: String) -> CmdResult<crate::cv_analysis::CvAnalysis> {
+    let model = {
+        let conn = state.db.lock().map_err(err)?;
+        crate::db::settings::get_or(&conn, "agent_model", "sonnet").map_err(err)?
+    };
+    tauri::async_runtime::spawn_blocking(move || crate::cv_analysis::analyze(&cv_text, &model))
         .await
         .map_err(err)
 }

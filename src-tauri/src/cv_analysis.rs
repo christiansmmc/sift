@@ -49,7 +49,7 @@ pub fn parse_response(stdout: &str) -> CvAnalysis {
     serde_json::from_str::<CvAnalysis>(&stdout[start..=end]).unwrap_or_default()
 }
 
-pub fn analyze(cv_text: &str) -> CvAnalysis {
+pub fn analyze(cv_text: &str, model: &str) -> CvAnalysis {
     if cv_text.trim().is_empty() {
         return CvAnalysis::default();
     }
@@ -57,6 +57,8 @@ pub fn analyze(cv_text: &str) -> CvAnalysis {
     let output = std::process::Command::new("claude")
         .arg("-p")
         .arg(&prompt)
+        .arg("--model")
+        .arg(model)
         .output();
     match output {
         Ok(o) if o.status.success() => parse_response(&String::from_utf8_lossy(&o.stdout)),
