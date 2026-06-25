@@ -53,9 +53,6 @@ export interface Job {
 export interface Application {
   id: number;
   job_id: number;
-  folder_path: string | null;
-  cv_path: string | null;
-  cover_letter_path: string | null;
   status: string;
   submitted_at: string | null;
 }

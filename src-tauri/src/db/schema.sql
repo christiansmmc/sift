@@ -12,9 +12,6 @@ CREATE TABLE IF NOT EXISTS jobs (
 CREATE TABLE IF NOT EXISTS applications (
     id                INTEGER PRIMARY KEY AUTOINCREMENT,
     job_id            INTEGER NOT NULL REFERENCES jobs(id),
-    folder_path       TEXT,
-    cv_path           TEXT,
-    cover_letter_path TEXT,
     status            TEXT NOT NULL DEFAULT 'awaiting_approval',
     submitted_at      TEXT
 );
@@ -37,13 +34,4 @@ CREATE TABLE IF NOT EXISTS profile (
     cv_text       TEXT NOT NULL DEFAULT '',
     criteria_json TEXT NOT NULL DEFAULT '{}',
     updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
-CREATE TABLE IF NOT EXISTS sessions (
-    id               INTEGER PRIMARY KEY AUTOINCREMENT,
-    started_at       TEXT NOT NULL DEFAULT (datetime('now')),
-    ended_at         TEXT,
-    found_count      INTEGER NOT NULL DEFAULT 0,
-    submitted_count  INTEGER NOT NULL DEFAULT 0,
-    end_reason       TEXT
 );

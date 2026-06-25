@@ -81,12 +81,12 @@ mod tests {
         let count: i64 = conn
             .query_row(
                 "SELECT COUNT(*) FROM sqlite_master WHERE type='table' \
-                 AND name IN ('jobs','applications','pending_actions','profile','sessions','answers')",
+                 AND name IN ('jobs','applications','pending_actions','profile','answers')",
                 [],
                 |r| r.get(0),
             )
             .unwrap();
-        assert_eq!(count, 6);
+        assert_eq!(count, 5);
     }
 
     #[test]

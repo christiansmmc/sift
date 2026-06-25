@@ -5,26 +5,8 @@ use serde::{Deserialize, Serialize};
 pub struct Application {
     pub id: i64,
     pub job_id: i64,
-    pub folder_path: Option<String>,
-    pub cv_path: Option<String>,
-    pub cover_letter_path: Option<String>,
     pub status: String,
     pub submitted_at: Option<String>,
-}
-
-pub fn create(
-    conn: &Connection,
-    job_id: i64,
-    folder_path: Option<&str>,
-    cv_path: Option<&str>,
-    cover_letter_path: Option<&str>,
-) -> rusqlite::Result<i64> {
-    conn.execute(
-        "INSERT INTO applications (job_id, folder_path, cv_path, cover_letter_path, status) \
-         VALUES (?1, ?2, ?3, ?4, 'awaiting_approval')",
-        (job_id, folder_path, cv_path, cover_letter_path),
-    )?;
-    Ok(conn.last_insert_rowid())
 }
 
 pub fn set_status(conn: &Connection, id: i64, status: &str) -> rusqlite::Result<()> {
@@ -56,27 +38,25 @@ pub fn mark_submitted(conn: &Connection, id: i64) -> rusqlite::Result<bool> {
 
 pub fn list(conn: &Connection) -> rusqlite::Result<Vec<Application>> {
     let mut stmt = conn.prepare(
-        "SELECT id, job_id, folder_path, cv_path, cover_letter_path, status, submitted_at \
-         FROM applications ORDER BY id DESC",
+        "SELECT id, job_id, status, submitted_at FROM applications ORDER BY id DESC",
     )?;
     let rows = stmt.query_map([], |r| {
         Ok(Application {
             id: r.get(0)?,
             job_id: r.get(1)?,
-            folder_path: r.get(2)?,
-            cv_path: r.get(3)?,
-            cover_letter_path: r.get(4)?,
-            status: r.get(5)?,
-            submitted_at: r.get(6)?,
+            status: r.get(2)?,
+            submitted_at: r.get(3)?,
         })
     })?;
     rows.collect()
 }
 
-/// True if the job already has an application that is awaiting approval or submitted.
+/// True if the job already has an application that is awaiting approval, approved,
+/// or submitted. Includes `approved` so re-running the agent after the user has
+/// approved a job does not create a duplicate application row for it.
 pub fn has_open_application(conn: &Connection, job_id: i64) -> rusqlite::Result<bool> {
     let n: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM applications WHERE job_id = ?1 AND status IN ('awaiting_approval','submitted')",
+        "SELECT COUNT(*) FROM applications WHERE job_id = ?1 AND status IN ('awaiting_approval','approved','submitted')",
         [job_id],
         |r| r.get(0),
     )?;
@@ -225,10 +205,21 @@ mod tests {
     }
 
     #[test]
+    fn has_open_application_counts_approved() {
+        let conn = open_in_memory();
+        let job_id = job(&conn);
+        let id = create_with_content(&conn, job_id, "cl", "[]").unwrap();
+        set_status(&conn, id, "approved").unwrap();
+        // An approved application must still count as "open" so the agent does
+        // not create a duplicate when it reports the same job again.
+        assert!(has_open_application(&conn, job_id).unwrap());
+    }
+
+    #[test]
     fn create_defaults_to_awaiting_approval() {
         let conn = open_in_memory();
         let job_id = job(&conn);
-        create(&conn, job_id, Some("/apps/acme"), None, None).unwrap();
+        create_with_content(&conn, job_id, "cl", "[]").unwrap();
         let app = &list(&conn).unwrap()[0];
         assert_eq!(app.status, "awaiting_approval");
         assert!(app.submitted_at.is_none());
@@ -238,7 +229,7 @@ mod tests {
     fn submitting_stamps_submitted_at() {
         let conn = open_in_memory();
         let job_id = job(&conn);
-        let id = create(&conn, job_id, None, None, None).unwrap();
+        let id = create_with_content(&conn, job_id, "cl", "[]").unwrap();
         set_status(&conn, id, "submitted").unwrap();
         let app = &list(&conn).unwrap()[0];
         assert_eq!(app.status, "submitted");
