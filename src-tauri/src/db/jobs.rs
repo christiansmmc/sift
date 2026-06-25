@@ -21,13 +21,30 @@ pub struct NewJob {
     pub source: String,
 }
 
+/// Normalise a job URL so that tracking params, fragments, trailing slashes
+/// and casing differences all collapse to the same canonical form.
+/// Rules (no external crates — plain string ops):
+///   1. Trim whitespace
+///   2. Drop everything from the first `#` (fragment)
+///   3. Drop everything from the first `?` (query string)
+///   4. Strip one trailing `/`
+///   5. Lowercase the whole result
+pub fn normalize_url(url: &str) -> String {
+    let s = url.trim();
+    let s = if let Some(pos) = s.find('#') { &s[..pos] } else { s };
+    let s = if let Some(pos) = s.find('?') { &s[..pos] } else { s };
+    let s = s.strip_suffix('/').unwrap_or(s);
+    s.to_lowercase()
+}
+
 pub fn insert(conn: &Connection, job: &NewJob) -> rusqlite::Result<i64> {
+    let url = normalize_url(&job.url);
     conn.execute(
         "INSERT INTO jobs (title, company, url, source) VALUES (?1, ?2, ?3, ?4) \
          ON CONFLICT(url) DO NOTHING",
-        (&job.title, &job.company, &job.url, &job.source),
+        (&job.title, &job.company, &url, &job.source),
     )?;
-    conn.query_row("SELECT id FROM jobs WHERE url = ?1", [&job.url], |r| r.get(0))
+    conn.query_row("SELECT id FROM jobs WHERE url = ?1", [&url], |r| r.get(0))
 }
 
 pub fn list(conn: &Connection) -> rusqlite::Result<Vec<Job>> {
@@ -90,6 +107,30 @@ mod tests {
             url: "https://linkedin.com/jobs/1".into(),
             source: "linkedin".into(),
         }
+    }
+
+    #[test]
+    fn normalize_url_strips_query_fragment_trailing_slash_and_lowercases() {
+        // full example from spec
+        assert_eq!(
+            normalize_url("https://www.LinkedIn.com/jobs/view/123/?utm=x#sec"),
+            "https://www.linkedin.com/jobs/view/123"
+        );
+        // idempotent
+        assert_eq!(
+            normalize_url("https://www.linkedin.com/jobs/view/123"),
+            "https://www.linkedin.com/jobs/view/123"
+        );
+        // query only
+        assert_eq!(normalize_url("https://example.com/path?foo=bar"), "https://example.com/path");
+        // fragment only
+        assert_eq!(normalize_url("https://example.com/path#frag"), "https://example.com/path");
+        // trailing slash only
+        assert_eq!(normalize_url("https://example.com/path/"), "https://example.com/path");
+        // whitespace trimming
+        assert_eq!(normalize_url("  https://example.com/path  "), "https://example.com/path");
+        // uppercase hostname
+        assert_eq!(normalize_url("HTTPS://EXAMPLE.COM/Path"), "https://example.com/path");
     }
 
     #[test]

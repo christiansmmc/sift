@@ -51,6 +51,25 @@ pub fn list(conn: &Connection) -> rusqlite::Result<Vec<Application>> {
     rows.collect()
 }
 
+/// Vacancy-level dedup guard: returns true if ANY application already exists
+/// for a vacancy identified by normalized URL OR by title+company match,
+/// in ANY status (including `discarded` so rejected vacancies don't resurface).
+pub fn has_open_application_for_vacancy(
+    conn: &Connection,
+    title: &str,
+    company: &str,
+    normalized_url: &str,
+) -> rusqlite::Result<bool> {
+    let n: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM applications a JOIN jobs j ON a.job_id = j.id \
+         WHERE a.status IN ('awaiting_approval','approved','submitted','discarded') \
+         AND (j.url = ?1 OR (j.title = ?2 AND j.company = ?3))",
+        (normalized_url, title, company),
+        |r| r.get(0),
+    )?;
+    Ok(n > 0)
+}
+
 /// True if the job already has an application that is awaiting approval, approved,
 /// or submitted. Includes `approved` so re-running the agent after the user has
 /// approved a job does not create a duplicate application row for it.
@@ -259,5 +278,51 @@ mod tests {
         assert_eq!(q.len(), 1);
         assert_eq!(q[0].company, "Acme");
         assert_eq!(q[0].cover_letter, "Dear Acme");
+    }
+
+    #[test]
+    fn has_open_application_for_vacancy_finds_by_normalized_url() {
+        let conn = open_in_memory();
+        let job_id = jobs::insert(&conn, &NewJob {
+            title: "Dev".into(), company: "Acme".into(),
+            url: "https://linkedin.com/jobs/1".into(), source: "linkedin".into(),
+        }).unwrap();
+        create_with_content(&conn, job_id, "cl", "[]").unwrap();
+        assert!(has_open_application_for_vacancy(
+            &conn, "Dev", "Acme", "https://linkedin.com/jobs/1"
+        ).unwrap());
+        // different URL → no match via URL branch (title+company mismatch too)
+        assert!(!has_open_application_for_vacancy(
+            &conn, "Other", "Other", "https://linkedin.com/jobs/999"
+        ).unwrap());
+    }
+
+    #[test]
+    fn has_open_application_for_vacancy_finds_by_title_and_company() {
+        let conn = open_in_memory();
+        let job_id = jobs::insert(&conn, &NewJob {
+            title: "Backend Dev".into(), company: "Techco".into(),
+            url: "https://linkedin.com/jobs/1".into(), source: "linkedin".into(),
+        }).unwrap();
+        create_with_content(&conn, job_id, "cl", "[]").unwrap();
+        // Different URL but same title+company → should find it
+        assert!(has_open_application_for_vacancy(
+            &conn, "Backend Dev", "Techco", "https://linkedin.com/jobs/different"
+        ).unwrap());
+    }
+
+    #[test]
+    fn has_open_application_for_vacancy_includes_discarded_status() {
+        let conn = open_in_memory();
+        let job_id = jobs::insert(&conn, &NewJob {
+            title: "Dev".into(), company: "Acme".into(),
+            url: "https://linkedin.com/jobs/1".into(), source: "linkedin".into(),
+        }).unwrap();
+        let app_id = create_with_content(&conn, job_id, "cl", "[]").unwrap();
+        set_status(&conn, app_id, "discarded").unwrap();
+        // discarded must count as "have seen this vacancy"
+        assert!(has_open_application_for_vacancy(
+            &conn, "Dev", "Acme", "https://linkedin.com/jobs/1"
+        ).unwrap());
     }
 }
