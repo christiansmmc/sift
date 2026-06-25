@@ -37,6 +37,8 @@ pub fn run() {
             commands::list_found_jobs,
             commands::approve_application,
             commands::reject_application,
+            commands::count_approved,
+            commands::submit_approved,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
