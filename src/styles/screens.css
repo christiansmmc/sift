@@ -60,9 +60,24 @@
   font-family: "Geist Mono", monospace;
 }
 
-/* Run button: aligned to bottom of flex row */
+/* Run button: solid fill, swaps accent ↔ danger by running state */
 .painel-run-btn {
   flex: none;
+  padding: 10px 26px;
+  border: none;
+  border-radius: 9px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+}
+.painel-run-btn:hover {
+  filter: brightness(1.06);
+}
+.painel-run-btn.running {
+  background: var(--danger);
 }
 
 /* Status indicator: dot + label */
@@ -158,10 +173,12 @@
   margin-bottom: 12px;
 }
 
-/* Feed card: tight padding, no gap between rows */
+/* Feed card: tight padding, no gap between rows; scrollable when content overflows */
 .painel-feed-card {
   padding: 6px 18px;
   margin: 0;
+  max-height: 240px;
+  overflow-y: auto;
 }
 
 /* Each feed row: dot + text, separated by border */

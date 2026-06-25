@@ -62,11 +62,12 @@ export default function Dashboard({
           />
         </label>
 
-        {running ? (
-          <button className="btn btn-danger painel-run-btn" onClick={onStop}>Parar</button>
-        ) : (
-          <button className="btn btn-primary painel-run-btn" onClick={onStart}>Iniciar</button>
-        )}
+        <button
+          className={`painel-run-btn${running ? " running" : ""}`}
+          onClick={running ? onStop : onStart}
+        >
+          {running ? "Parar" : "Iniciar"}
+        </button>
 
         {!running && approvedCount > 0 && (
           <button className="btn btn-primary" onClick={onSubmitApproved}>
