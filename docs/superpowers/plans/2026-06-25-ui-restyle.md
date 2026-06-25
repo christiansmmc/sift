@@ -542,7 +542,7 @@ git commit -m "feat(ui): onboarding wizard restyle"
 Gathers the deferred Minor findings from the per-task reviews plus one user-approved functional add (the nav count badge). Do this after Tasks 5–10.
 
 **Files:**
-- Modify: `src/styles/chrome.css` (titlebar fidelity + badge style + accent-bar overflow), `src/Titlebar.tsx` (logo inner dot), `src/App.tsx` (nav badge + nested-nav fix), `src/styles/components.css` (two minor cleanups)
+- Modify: `src/styles/chrome.css` (titlebar fidelity + badge style + accent-bar overflow), `src/Titlebar.tsx` (logo inner dot), `src/App.tsx` (nav badge + nested-nav fix), `src/styles/components.css` (two minor cleanups), `src/styles/screens.css` (Perfil max-width + Config select cleanup), `src/screens/Pending.tsx` (drop orphaned class)
 - Reference: `design_handoff_applybot/Applybot.dc.html` / `support.js`
 
 **Interfaces:**
@@ -554,18 +554,20 @@ Gathers the deferred Minor findings from the per-task reviews plus one user-appr
 
 - [ ] **Step 3: Nested-nav fix.** In `src/App.tsx`, the sidebar uses `<nav className="sidebar">` wrapping an inner `<nav>`. Change the inner `<nav>` to a `<div>` (keep classes/structure otherwise) so there's a single nav landmark.
 
-- [ ] **Step 4: Nav count badge.** In `src/App.tsx`, add a count badge to the relevant nav item (Pendências) showing the open-pending count from the existing `counts` data. Render the badge only when the count > 0. Add a `.nav-badge` style to `src/styles/chrome.css` matching the prototype (small pill, Geist Mono, `min-width:17px`, height ~17px, `color-mix` background). Do not change any count-fetching logic — read the value already available.
+- [ ] **Step 4: Nav count badge.** In `src/App.tsx`, the nav renders a `NAV` array; the Pendências item has `key: "pending"`. Add a count badge to that item showing `counts?.pending` (from the existing `DashboardCounts` already held in `App.tsx` state — `counts.pending: number`). Render the badge only when `counts?.pending` is > 0. Add a `.nav-badge` style to `src/styles/chrome.css` matching the prototype (small pill, Geist Mono, `min-width:17px`, height ~17px, `color-mix` background). Do not change any count-fetching logic — read the value already available.
 
 - [ ] **Step 5: Component minor cleanups.** In `src/styles/components.css`: remove the dead `border-color: var(--accent)` in `.btn-primary` (it's reset by `border: none`); narrow `.tab-btn`'s `transition: all .12s` to `transition: background .12s, color .12s, box-shadow .12s`.
 
-- [ ] **Step 6: Verify build.** Run: `npx tsc --noEmit` and `npm run build`. Expected: clean.
+- [ ] **Step 6: Screen CSS minor cleanups (carry-over from per-task reviews).** In `src/styles/screens.css`: (a) restore a `max-width` on the Perfil container — add `max-width: 640px;` to `.perfil` (the original `.prof` had it; it was lost in Task 8). (b) Reduce `.config-select-wrap select` to just `width: 100%` (it redundantly re-states `appearance`, `-webkit-appearance`, `padding-right`, `cursor` already set on the global `select` rule in components.css). In `src/screens/Pending.tsx`: remove the orphaned `pend-card` class from the card `className` (it has no CSS rule), or add a `.pend-card` rule if a card-specific style is wanted — prefer removing the unused class.
 
-- [ ] **Step 7: Verify visually.** Run `npm run tauri dev`. Expected: titlebar is 40px with the dotted logo and lighter wordmark; nav shows the Pendências badge when there are open pendências; everything else unchanged. Check both themes.
+- [ ] **Step 7: Verify build.** Run: `npx tsc --noEmit` and `npm run build`. Expected: clean.
 
-- [ ] **Step 8: Commit.**
+- [ ] **Step 8: Verify visually.** Run `npm run tauri dev`. Expected: titlebar is 40px with the dotted logo and lighter wordmark; nav shows the Pendências badge when `counts.pending > 0`; Perfil form is width-constrained; everything else unchanged. Check both themes.
+
+- [ ] **Step 9: Commit.**
 
 ```bash
-git add src/styles/chrome.css src/styles/components.css src/Titlebar.tsx src/App.tsx
+git add src/styles/chrome.css src/styles/components.css src/styles/screens.css src/Titlebar.tsx src/App.tsx src/screens/Pending.tsx
 git commit -m "polish(ui): titlebar fidelity, nav count badge, minor cleanups"
 ```
 
