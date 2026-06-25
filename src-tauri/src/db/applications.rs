@@ -70,18 +70,6 @@ pub fn has_open_application_for_vacancy(
     Ok(n > 0)
 }
 
-/// True if the job already has an application that is awaiting approval, approved,
-/// or submitted. Includes `approved` so re-running the agent after the user has
-/// approved a job does not create a duplicate application row for it.
-pub fn has_open_application(conn: &Connection, job_id: i64) -> rusqlite::Result<bool> {
-    let n: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM applications WHERE job_id = ?1 AND status IN ('awaiting_approval','approved','submitted')",
-        [job_id],
-        |r| r.get(0),
-    )?;
-    Ok(n > 0)
-}
-
 /// Create an application already carrying generated content, awaiting approval.
 pub fn create_with_content(
     conn: &Connection,
@@ -221,17 +209,6 @@ mod tests {
         assert_eq!(items[0].application_id, id);
         assert_eq!(items[0].url, "u1");
         assert_eq!(count_approved(&conn).unwrap(), 1);
-    }
-
-    #[test]
-    fn has_open_application_counts_approved() {
-        let conn = open_in_memory();
-        let job_id = job(&conn);
-        let id = create_with_content(&conn, job_id, "cl", "[]").unwrap();
-        set_status(&conn, id, "approved").unwrap();
-        // An approved application must still count as "open" so the agent does
-        // not create a duplicate when it reports the same job again.
-        assert!(has_open_application(&conn, job_id).unwrap());
     }
 
     #[test]
