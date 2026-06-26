@@ -17,6 +17,7 @@ pub fn extract_docx(bytes: &[u8]) -> Result<String, String> {
         .read_to_string(&mut xml)
         .map_err(|e| format!("read document.xml: {e}"))?;
 
+    use quick_xml::escape::unescape;
     use quick_xml::events::Event;
     use quick_xml::reader::Reader;
     let mut reader = Reader::from_str(&xml);
@@ -29,7 +30,11 @@ pub fn extract_docx(bytes: &[u8]) -> Result<String, String> {
             Ok(Event::End(e)) if e.name().as_ref() == b"w:t" => in_text = false,
             Ok(Event::End(e)) if e.name().as_ref() == b"w:p" => out.push('\n'),
             Ok(Event::Text(t)) if in_text => {
-                out.push_str(&t.unescape().map_err(|e| format!("xml unescape: {e}"))?);
+                // quick-xml 0.39 removed BytesText::unescape: decode the bytes,
+                // then resolve XML entities with the free unescape function.
+                let decoded = t.decode().map_err(|e| format!("xml decode: {e}"))?;
+                let text = unescape(&decoded).map_err(|e| format!("xml unescape: {e}"))?;
+                out.push_str(&text);
             }
             Ok(Event::Eof) => break,
             Err(e) => return Err(format!("xml parse error: {e}")),
