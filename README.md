@@ -7,9 +7,12 @@
 **Finds jobs on LinkedIn, drafts a tailored cover letter and screening answers for each one,
 and shows them to you for approval — nothing is submitted without your "Approve".**
 
+[![Website](https://img.shields.io/badge/website-christiansmmc.github.io%2Fsift-5b54e6?style=flat-square)](https://christiansmmc.github.io/sift/)
 ![Platform](https://img.shields.io/badge/platform-Windows-0f141a?style=flat-square)
 ![Built with Tauri](https://img.shields.io/badge/built%20with-Tauri%20v2-6f67f7?style=flat-square)
 ![Powered by Claude](https://img.shields.io/badge/powered%20by-Claude-22d3ee?style=flat-square)
+
+🌐 **[christiansmmc.github.io/sift](https://christiansmmc.github.io/sift/)**
 
 </div>
 
