@@ -31,7 +31,7 @@ export default function StepCriteria({
           onChange={(e) => set("salary_min", e.target.value === "" ? null : Number(e.target.value))} />
       </label>
       <label className="field">Red-lines (o que evitar, separadas por vírgula)
-        <input value={value.red_lines.join(", ")}
+        <input value={value.red_lines.join(", ")} placeholder="ex: presencial obrigatório, viagens frequentes, stack legada"
           onChange={(e) => set("red_lines", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} />
       </label>
     </section>

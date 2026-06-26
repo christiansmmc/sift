@@ -9,6 +9,7 @@ import Pending from "./screens/Pending";
 import Profile from "./screens/Profile";
 import Settings from "./screens/Settings";
 import Titlebar from "./Titlebar";
+import BrandMark from "./BrandMark";
 
 type Screen = "dashboard" | "jobs" | "pending" | "profile" | "settings";
 
@@ -89,14 +90,20 @@ export default function App() {
   }
 
   if (onboarded === null) return <div className="loading">Carregando…</div>;
-  if (!onboarded) return <Onboarding onDone={() => setOnboarded(true)} />;
+  if (!onboarded)
+    return (
+      <div className="root">
+        <Titlebar />
+        <Onboarding onDone={() => setOnboarded(true)} />
+      </div>
+    );
 
   return (
     <div className="root">
       <Titlebar />
       <div className="app">
         <nav className="sidebar">
-          <div className="brand">apply<span>bot</span></div>
+          <div className="brand"><BrandMark size={26} /><span className="brand-word">sift</span></div>
           <div className="sidebar-links">
             {NAV.map((n) => (
               <button

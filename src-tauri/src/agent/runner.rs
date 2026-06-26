@@ -144,6 +144,17 @@ fn spawn_agent(
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
 
+    // On Windows `claude` resolves to a `.cmd`/`.ps1` shim, which spawns a
+    // console host. Launched from the GUI .exe (no console of its own) that
+    // pops a blank PowerShell/conhost window for each run. CREATE_NO_WINDOW
+    // suppresses it without affecting the piped stdout/stderr we read.
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+
     let mut child = cmd
         .spawn()
         .map_err(|e| format!("Falha ao iniciar o agente (claude): {e}"))?;

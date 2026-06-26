@@ -147,7 +147,7 @@ export default function Profile() {
             onChange={(e) => setCrit("salary_min", e.target.value === "" ? null : Number(e.target.value))} />
         </label>
         <label className="field">Red-lines (vírgula)
-          <input value={criteria.red_lines.join(", ")}
+          <input value={criteria.red_lines.join(", ")} placeholder="ex: presencial obrigatório, viagens frequentes, stack legada"
             onChange={(e) => setCrit("red_lines", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))} />
         </label>
       </div>
