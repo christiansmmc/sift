@@ -43,10 +43,10 @@ never invents information to fill a field.
 ### ⬇️ Download (recommended)
 
 1. Open the [**Releases**](../../releases) page.
-2. Download a Windows installer from the latest release:
-   - `sift_<version>_x64-setup.exe` — NSIS installer (**recommended**), or
-   - `sift_<version>_x64_en-US.msi` — MSI installer.
-3. Run it, then launch **Sift** from the Start menu.
+2. Download the installer for your platform from the latest release:
+   - **Windows** — `sift_<version>_x64-setup.exe` (NSIS, **recommended**) or `sift_<version>_x64_en-US.msi`
+   - **Linux** — `sift_<version>_amd64.AppImage` (`chmod +x` it, then run) or `sift_<version>_amd64.deb`
+3. Run it, then launch **Sift**.
 
 > The build isn't code-signed, so Windows SmartScreen may warn on first launch.
 > Click **More info → Run anyway**.
