@@ -1,0 +1,42 @@
+name: Bug report
+description: Report something that isn't working as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the bug and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS / version
+      placeholder: Windows 11 24H2, Sift 0.1.2
+    validations:
+      required: true
+  - type: textarea
+    id: env
+    attributes:
+      label: Runtime setup
+      description: Chrome + Claude in Chrome extension connected? Claude Code CLI version (`claude --version`)? LinkedIn logged in?
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots
+      description: Any relevant error output or screenshots.
+    validations:
+      required: false
