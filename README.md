@@ -191,4 +191,11 @@ SQLite; the React UI watches that state and reflects it in real time. Brand asse
 
 ## License
 
-No license has been chosen yet; all rights reserved by the author until one is added.
+Released under the [MIT License](LICENSE).
+
+<br>
+
+## Contributing
+
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for setup,
+the dev workflow, and how to open a pull request.
