@@ -550,9 +550,10 @@
         <h2 style="margin:0;font-size:42px;font-weight:800;letter-spacing:-1.3px;color:#f7f8fa;text-wrap:balance">Pare de rolar.<br>Comece a peneirar.</h2>
         <p style="margin:18px auto 0;max-width:460px;font-size:16.5px;line-height:1.55;color:#a7afbc">Baixe o Sift e deixe o agente trabalhar enquanto você foca no que importa: as entrevistas.</p>
         <div style="display:flex;gap:13px;justify-content:center;margin-top:32px;flex-wrap:wrap">
-          <a href="https://github.com/christiansmmc/sift/releases/latest/download/sift_0.1.2_x64-setup.exe" download style="display:flex;align-items:center;gap:9px;padding:15px 28px;border-radius:11px;background:#5b54e6;color:#fff;font-size:15px;font-weight:600;text-decoration:none;box-shadow:0 10px 30px -8px rgba(91,84,230,.7)" class="hv7"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M0 2.2 6.5 1.3v6.2H0zM7.3 1.2 16 0v7.5H7.3zM0 8.5h6.5v6.2L0 13.8zM7.3 8.5H16V16l-8.7-1.2z"></path></svg>Baixar para Windows</a>
+          <a data-dl="windows" href="https://github.com/christiansmmc/sift/releases/latest" style="display:flex;align-items:center;gap:9px;padding:15px 28px;border-radius:11px;background:#5b54e6;color:#fff;font-size:15px;font-weight:600;text-decoration:none;box-shadow:0 10px 30px -8px rgba(91,84,230,.7)" class="hv7"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M0 2.2 6.5 1.3v6.2H0zM7.3 1.2 16 0v7.5H7.3zM0 8.5h6.5v6.2L0 13.8zM7.3 8.5H16V16l-8.7-1.2z"></path></svg>Baixar para Windows</a>
+          <a data-dl="linux" href="https://github.com/christiansmmc/sift/releases/latest" style="display:flex;align-items:center;gap:9px;padding:15px 28px;border-radius:11px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);color:#e8eaef;font-size:15px;font-weight:600;text-decoration:none" class="hv6"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M7.25 1a.75.75 0 0 1 1.5 0v7.19l2.22-2.22a.75.75 0 1 1 1.06 1.06l-3.5 3.5a.75.75 0 0 1-1.06 0l-3.5-3.5a.75.75 0 0 1 1.06-1.06l2.22 2.22zM2.5 13a.75.75 0 0 1 .75.75v.5h9.5v-.5a.75.75 0 0 1 1.5 0v.75a1 1 0 0 1-1 1H2.75a1 1 0 0 1-1-1v-.75A.75.75 0 0 1 2.5 13"></path></svg>Baixar para Linux (AppImage)</a>
         </div>
-        <div style="margin-top:18px;font-size:13px;color:#697080;font-family:'Geist Mono',monospace">Windows 10/11 · grátis durante o beta</div>
+        <div style="margin-top:18px;font-size:13px;color:#697080;font-family:'Geist Mono',monospace">Windows 10/11 · Linux x86-64 · grátis durante o beta <span data-version></span></div>
       </div>
     </div>
   </section>
@@ -569,6 +570,41 @@
   </footer>
 
 </div>
+
+<!-- Resolve the latest release assets so the download buttons always point at
+     the current version (filenames include the version, so we can't hardcode). -->
+<script>
+(function () {
+  var REPO = 'christiansmmc/sift';
+  var FALLBACK = 'https://github.com/' + REPO + '/releases/latest';
+  function setHref(sel, url) {
+    document.querySelectorAll('[data-dl="' + sel + '"]').forEach(function (el) {
+      if (url) { el.setAttribute('href', url); el.setAttribute('download', ''); }
+    });
+  }
+  fetch('https://api.github.com/repos/' + REPO + '/releases/latest', {
+    headers: { Accept: 'application/vnd.github+json' }
+  })
+    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+    .then(function (rel) {
+      var assets = rel.assets || [];
+      var find = function (re) {
+        var a = assets.find(function (x) { return re.test(x.name); });
+        return a && a.browser_download_url;
+      };
+      // Windows: prefer the NSIS setup .exe, fall back to the .msi.
+      setHref('windows', find(/-setup\.exe$/i) || find(/\.exe$/i) || find(/\.msi$/i) || FALLBACK);
+      // Linux: the AppImage.
+      setHref('linux', find(/\.AppImage$/i) || FALLBACK);
+      if (rel.tag_name) {
+        document.querySelectorAll('[data-version]').forEach(function (el) {
+          el.textContent = '· ' + rel.tag_name;
+        });
+      }
+    })
+    .catch(function () { /* keep the fallback hrefs (releases page) */ });
+})();
+</script>
 
 </body>
 </html>
