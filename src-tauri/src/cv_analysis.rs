@@ -54,12 +54,17 @@ pub fn analyze(cv_text: &str, model: &str) -> CvAnalysis {
         return CvAnalysis::default();
     }
     let prompt = build_prompt(cv_text);
-    let output = std::process::Command::new("claude")
-        .arg("-p")
-        .arg(&prompt)
-        .arg("--model")
-        .arg(model)
-        .output();
+    let mut cmd = std::process::Command::new("claude");
+    cmd.arg("-p").arg(&prompt).arg("--model").arg(model);
+    // Suppress the blank console window the `claude` shim would otherwise pop
+    // on Windows when launched from the GUI .exe. See agent::runner::spawn_agent.
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+    let output = cmd.output();
     match output {
         Ok(o) if o.status.success() => parse_response(&String::from_utf8_lossy(&o.stdout)),
         _ => CvAnalysis::default(),

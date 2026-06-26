@@ -55,7 +55,9 @@ export default function StepCv({
       const gotPersonal = a.personal.full_name || a.personal.email || a.personal.location;
       const gotCriteria = a.criteria.role || a.criteria.seniority || a.criteria.work_model;
       if (gotPersonal) setPersonal(mergeNonEmpty(personal, a.personal));
-      if (gotCriteria) setCriteria(mergeNonEmpty(criteria, a.criteria));
+      // Don't auto-fill red-lines ("what to avoid") — it's subjective, so leave
+      // it empty and let its placeholder guide the user (like salário mínimo).
+      if (gotCriteria) setCriteria(mergeNonEmpty(criteria, { ...a.criteria, red_lines: [] }));
       if (gotPersonal || gotCriteria) {
         setAnalyzed(true);
       } else {
