@@ -16,6 +16,8 @@ export default function Settings() {
   const [status, setStatus] = useState<string | null>(null);
   const [follow, setFollow] = useState(false);
   const [model, setModel] = useState("sonnet");
+  const [agentStatus, setAgentStatus] = useState<string | null>(null);
+  const [followStatus, setFollowStatus] = useState<string | null>(null);
 
   useEffect(() => {
     api.getSetting("cover_letter_style").then((v) => { if (v) setStyle(v as Style); });
@@ -27,7 +29,9 @@ export default function Settings() {
   const handleModelChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     setModel(value);
+    setAgentStatus(null);
     await api.setSetting("agent_model", value);
+    setAgentStatus("Modelo salvo — vale para as próximas buscas.");
   };
 
   async function save() {
@@ -88,11 +92,14 @@ export default function Settings() {
               checked={follow}
               onChange={async (e) => {
                 setFollow(e.target.checked);
+                setFollowStatus(null);
                 await api.setSetting("follow_company", e.target.checked ? "true" : "false");
+                setFollowStatus("Preferência salva — vale para as próximas candidaturas.");
               }}
             />
             Seguir a empresa ao se candidatar
           </label>
+          {followStatus && <p className="hint" style={{ marginTop: 8 }}>{followStatus}</p>}
         </div>
 
         {/* Card 3: Agent model */}
@@ -104,12 +111,13 @@ export default function Settings() {
             <div className="config-select-wrap">
               <select value={model} onChange={handleModelChange}>
                 <option value="opus">Opus 4.8 (melhor qualidade)</option>
-                <option value="sonnet">Sonnet 4.6 (rápido — recomendado)</option>
+                <option value="sonnet">Sonnet 5 (rápido — recomendado)</option>
                 <option value="haiku">Haiku 4.5 (mais rápido, menos confiável)</option>
               </select>
               <span className="config-chevron">▾</span>
             </div>
           </div>
+          {agentStatus && <p className="hint" style={{ marginTop: 8 }}>{agentStatus}</p>}
         </div>
       </div>
     </section>
