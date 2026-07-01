@@ -149,7 +149,8 @@ mod tests {
         // The batch counts REPORTED matches, not evaluated candidates: skips must
         // not count, and the stop condition must be framed around matches.
         assert!(out.contains("does NOT count"));
-        assert!(out.contains("{{BATCH_SIZE}}") == false && out.contains("MATCHING jobs"));
+        assert!(!out.contains("{{BATCH_SIZE}}"));
+        assert!(out.contains("MATCHING jobs"));
         assert!(out.contains("Ada"));
         assert!(out.contains("8 years backend"));
         assert!(out.contains(r#"{"role":"backend"}"#));

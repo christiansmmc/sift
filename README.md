@@ -150,7 +150,7 @@ the agent can reuse that answer next time.
 **Perfil (Profile)** — edit your CV, personal data, and search criteria any time.
 
 **Configurações (Settings)** — cover-letter style (short / balanced / detailed / custom), whether
-to follow the company on apply (off by default), and the agent model (Sonnet 4.6 — fast,
+to follow the company on apply (off by default), and the agent model (Sonnet 5 — fast,
 recommended; Opus 4.8 — best quality; Haiku 4.5 — fastest).
 
 </details>

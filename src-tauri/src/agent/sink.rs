@@ -7,9 +7,13 @@ use crate::db::{applications, jobs, pending};
 pub enum EventOutcome {
     /// Job saved AND an application was queued for review (Revisar happy path).
     Queued,
-    /// Job saved but no review application was queued — a Scan-mode discovery,
-    /// an empty cover letter, or a duplicate of a vacancy already in the queue.
+    /// A genuinely new vacancy was saved but no review application was queued —
+    /// a Scan-mode discovery or an empty cover letter. Surfaces as a fresh find.
     Recorded,
+    /// The reported vacancy was already known: the same URL was re-scanned, or
+    /// the vacancy is already queued/discarded under another URL. Nothing new
+    /// entered the review queue, so this must NOT surface as a fresh discovery.
+    Duplicate,
     Pending,
     LoginRequired,
     Done,
@@ -19,7 +23,7 @@ pub enum EventOutcome {
 pub fn apply_event(conn: &Connection, event: &AgentEvent) -> rusqlite::Result<EventOutcome> {
     match event {
         AgentEvent::Job(j) => {
-            let job_id = jobs::insert(
+            let (job_id, is_new_job) = jobs::insert_returning_is_new(
                 conn,
                 &jobs::NewJob {
                     title: j.title.clone(),
@@ -36,16 +40,21 @@ pub fn apply_event(conn: &Connection, event: &AgentEvent) -> rusqlite::Result<Ev
             // title+company at a different path; also blocks re-discovery of
             // discarded vacancies.
             let nurl = jobs::normalize_url(&j.url);
-            let queued = !j.cover_letter.trim().is_empty()
-                && !applications::has_open_application_for_vacancy(conn, &j.title, &j.company, &nurl)?;
+            let dup_vacancy =
+                applications::has_open_application_for_vacancy(conn, &j.title, &j.company, &nurl)?;
+            let queued = !j.cover_letter.trim().is_empty() && !dup_vacancy;
             if queued {
                 let answers_json = serde_json::to_string(&j.answers).unwrap_or_else(|_| "[]".into());
                 applications::create_with_content(conn, job_id, &j.cover_letter, &answers_json)?;
                 Ok(EventOutcome::Queued)
-            } else {
-                // Scan-mode discovery, empty cover letter, or a duplicate vacancy:
-                // the job is recorded but nothing new entered the review queue.
+            } else if is_new_job && !dup_vacancy {
+                // A genuinely new vacancy saved with no queued application:
+                // a Scan-mode discovery or an empty cover letter.
                 Ok(EventOutcome::Recorded)
+            } else {
+                // Re-report: the URL was already recorded, or the vacancy is
+                // already queued/discarded. Nothing new entered the review queue.
+                Ok(EventOutcome::Duplicate)
             }
         }
         AgentEvent::Pending(p) => {
@@ -144,8 +153,8 @@ mod tests {
         });
         assert_eq!(apply_event(&conn, &ev).unwrap(), EventOutcome::Queued);
         // Re-reporting the same vacancy must NOT queue a second application, and
-        // the outcome must reflect that nothing new entered the review queue.
-        assert_eq!(apply_event(&conn, &ev).unwrap(), EventOutcome::Recorded);
+        // the outcome must be Duplicate so the feed doesn't announce a fresh find.
+        assert_eq!(apply_event(&conn, &ev).unwrap(), EventOutcome::Duplicate);
         assert_eq!(applications::list(&conn).unwrap().len(), 1);
     }
 
@@ -162,6 +171,9 @@ mod tests {
         });
         assert_eq!(apply_event(&conn, &ev).unwrap(), EventOutcome::Recorded);
         assert!(applications::list(&conn).unwrap().is_empty());
+        // Re-scanning the same URL (now encouraged by the "keep browsing" prompt)
+        // is a re-report, not a fresh discovery.
+        assert_eq!(apply_event(&conn, &ev).unwrap(), EventOutcome::Duplicate);
     }
 
     #[test]

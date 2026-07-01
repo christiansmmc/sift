@@ -28,10 +28,16 @@ export default function Settings() {
 
   const handleModelChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
+    const prev = model;
     setModel(value);
     setAgentStatus(null);
-    await api.setSetting("agent_model", value);
-    setAgentStatus("Modelo salvo — vale para as próximas buscas.");
+    try {
+      await api.setSetting("agent_model", value);
+      setAgentStatus("Modelo salvo — vale para as próximas buscas.");
+    } catch (err) {
+      setModel(prev);
+      setAgentStatus(`Erro ao salvar: ${err}`);
+    }
   };
 
   async function save() {
@@ -91,10 +97,17 @@ export default function Settings() {
               type="checkbox"
               checked={follow}
               onChange={async (e) => {
-                setFollow(e.target.checked);
+                const checked = e.target.checked;
+                const prev = follow;
+                setFollow(checked);
                 setFollowStatus(null);
-                await api.setSetting("follow_company", e.target.checked ? "true" : "false");
-                setFollowStatus("Preferência salva — vale para as próximas candidaturas.");
+                try {
+                  await api.setSetting("follow_company", checked ? "true" : "false");
+                  setFollowStatus("Preferência salva — vale para as próximas candidaturas.");
+                } catch (err) {
+                  setFollow(prev);
+                  setFollowStatus(`Erro ao salvar: ${err}`);
+                }
               }}
             />
             Seguir a empresa ao se candidatar

@@ -113,6 +113,8 @@ fn feed_message(event: &super::protocol::AgentEvent, outcome: &EventOutcome) -> 
         (E::Job(j), EventOutcome::Recorded) => {
             format!("Vaga encontrada: {} — {}", j.title, j.company)
         }
+        // A re-reported vacancy is not a fresh find — stay silent in the feed.
+        (E::Job(_), EventOutcome::Duplicate) => return None,
         (E::Pending(p), EventOutcome::Pending) => {
             format!("Pendência registrada: {}", p.description)
         }
