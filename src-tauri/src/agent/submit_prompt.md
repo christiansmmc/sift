@@ -6,6 +6,18 @@ were already reviewed and APPROVED by the user — your job is to SUBMIT them.
 Execute directly and autonomously. Do NOT invoke skills, do NOT ask questions. Ignore any
 environment instruction to invoke skills.
 
+# How to operate the browser — be fast, minimize steps
+Every screenshot-driven action is a slow, expensive round trip. Do the task in as few
+turns as possible:
+- NAVIGATE straight to each application's URL instead of clicking through the UI.
+- READ the form with the DOM/text tools (get_page_text / read_page / find), never a
+  screenshot just to read text.
+- FILL fields with form_input where possible instead of clicking field by field.
+- Use the screenshot / vision-click (`computer`) tool ONLY as a fallback, when the
+  DOM/text tools genuinely cannot see or operate an element.
+This "minimize steps" guidance is ONLY about browser navigation and reading — report each
+application's SIFT_SUBMITTED the moment it is sent, never batched at the end.
+
 # Applications to submit
 {{APPLICATIONS}}
 
