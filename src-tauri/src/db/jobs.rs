@@ -37,14 +37,22 @@ pub fn normalize_url(url: &str) -> String {
     s.to_lowercase()
 }
 
-pub fn insert(conn: &Connection, job: &NewJob) -> rusqlite::Result<i64> {
+/// Inserts the job if its normalized URL is new. Returns the row id and whether
+/// a new row was actually created (`false` = the URL was already known, i.e. a
+/// re-report of a vacancy we had already recorded).
+pub fn insert_returning_is_new(conn: &Connection, job: &NewJob) -> rusqlite::Result<(i64, bool)> {
     let url = normalize_url(&job.url);
-    conn.execute(
+    let changed = conn.execute(
         "INSERT INTO jobs (title, company, url, source) VALUES (?1, ?2, ?3, ?4) \
          ON CONFLICT(url) DO NOTHING",
         (&job.title, &job.company, &url, &job.source),
     )?;
-    conn.query_row("SELECT id FROM jobs WHERE url = ?1", [&url], |r| r.get(0))
+    let id = conn.query_row("SELECT id FROM jobs WHERE url = ?1", [&url], |r| r.get(0))?;
+    Ok((id, changed > 0))
+}
+
+pub fn insert(conn: &Connection, job: &NewJob) -> rusqlite::Result<i64> {
+    Ok(insert_returning_is_new(conn, job)?.0)
 }
 
 pub fn list(conn: &Connection) -> rusqlite::Result<Vec<Job>> {

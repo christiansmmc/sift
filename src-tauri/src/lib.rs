@@ -1,4 +1,5 @@
 mod agent;
+mod claude_cli;
 mod commands;
 mod cv_analysis;
 mod db;
