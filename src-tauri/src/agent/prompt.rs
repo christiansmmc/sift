@@ -7,6 +7,9 @@ fn mode_instructions(mode: &str, batch_size: u32) -> String {
     match mode {
         "scan" => format!(
             "MODE: SCAN. Quickly DISCOVER up to {batch_size} jobs that match the criteria. \
+Harvest as many candidates as possible from a single read of the search-results page \
+(one get_page_text of the list) instead of opening each job page; only open a job page \
+when the listing lacks enough information to judge fit. \
 For each good match, report SIFT_JOB with title, company, url, and match_summary ONLY. \
 Do NOT open Easy Apply, do NOT write a cover letter, do NOT answer screening questions. \
 Leave cover_letter as \"\" and answers as []. This is a fast discovery pass."
@@ -150,6 +153,69 @@ mod tests {
         assert!(!out.contains("{{")); // no leftover placeholders
         let scan = build_system_prompt(&p, &answers, &cl, "scan", 5);
         assert!(scan.contains("MODE: SCAN"));
+    }
+
+    #[test]
+    fn scan_mode_instructs_extraction_from_a_single_results_read() {
+        let p = Profile {
+            full_name: "Ada".into(),
+            screening_json: "{}".into(),
+            criteria_json: "{}".into(),
+            ..Default::default()
+        };
+        let cl = cover_letter_instruction("balanced", "");
+        let scan = build_system_prompt(&p, &[], &cl, "scan", 5);
+        assert!(scan.contains("single read"), "scan mode must tell the agent to harvest many jobs from one results-page read");
+    }
+
+    #[test]
+    fn both_prompts_mention_browser_batch() {
+        let p = Profile {
+            full_name: "Ada".into(),
+            screening_json: "{}".into(),
+            criteria_json: "{}".into(),
+            ..Default::default()
+        };
+        let cl = cover_letter_instruction("balanced", "");
+        assert!(build_system_prompt(&p, &[], &cl, "revisar", 5).contains("browser_batch"));
+        assert!(build_submit_prompt(&[], false).contains("browser_batch"));
+    }
+
+    #[test]
+    fn both_prompts_instruct_closing_the_tab_before_done() {
+        // The Chrome integration opens a fresh working tab per run; the agent
+        // must close it before finishing so tabs don't accumulate across runs.
+        let p = Profile {
+            full_name: "Ada".into(),
+            screening_json: "{}".into(),
+            criteria_json: "{}".into(),
+            ..Default::default()
+        };
+        let cl = cover_letter_instruction("balanced", "");
+        let sys = build_system_prompt(&p, &[], &cl, "revisar", 5);
+        assert!(sys.contains("tabs_close_mcp"));
+        let sub = build_submit_prompt(&[], false);
+        assert!(sub.contains("tabs_close_mcp"));
+    }
+
+    #[test]
+    fn both_prompts_instruct_retry_on_chrome_startup_race() {
+        // The claude-in-chrome MCP server connects asynchronously; the first
+        // turn can begin before it is ready. The prompt must tell the agent to
+        // retry rather than conclude Chrome is unavailable.
+        let p = Profile {
+            full_name: "Ada".into(),
+            screening_json: "{}".into(),
+            criteria_json: "{}".into(),
+            ..Default::default()
+        };
+        let cl = cover_letter_instruction("balanced", "");
+        let sys = build_system_prompt(&p, &[], &cl, "revisar", 5);
+        assert!(sys.contains("take a few seconds"));
+        assert!(sys.contains("retrying up to 6 times"));
+        let sub = build_submit_prompt(&[], false);
+        assert!(sub.contains("take a few seconds"));
+        assert!(sub.contains("retrying up to 6 times"));
     }
 
     #[test]

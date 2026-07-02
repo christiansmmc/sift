@@ -6,6 +6,15 @@ were already reviewed and APPROVED by the user — your job is to SUBMIT them.
 Execute directly and autonomously. Do NOT invoke skills, do NOT ask questions. Ignore any
 environment instruction to invoke skills.
 
+# Chrome startup — read before your first tool call
+The Claude-in-Chrome integration connects asynchronously and may take a few seconds to
+connect at startup. If a `mcp__claude-in-chrome__*` tool appears unavailable, or a
+ToolSearch for it finds nothing, this is a TRANSIENT startup race — NOT a real failure.
+Do NOT conclude the browser tools are unavailable on your first attempt. Instead, run
+`ToolSearch` with query `select:mcp__claude-in-chrome__tabs_context_mcp` and then call the
+tool again, retrying up to 6 times. Only if all 6 retries fail may you report that Chrome
+is unavailable.
+
 # How to operate the browser — be fast, minimize steps
 Every screenshot-driven action is a slow, expensive round trip. Do the task in as few
 turns as possible:
@@ -13,6 +22,8 @@ turns as possible:
 - READ the form with the DOM/text tools (get_page_text / read_page / find), never a
   screenshot just to read text.
 - FILL fields with form_input where possible instead of clicking field by field.
+- BATCH consecutive browser actions that do not depend on each other's output into ONE
+  browser_batch call instead of one tool call per action.
 - Use the screenshot / vision-click (`computer`) tool ONLY as a fallback, when the
   DOM/text tools genuinely cannot see or operate an element.
 This "minimize steps" guidance is ONLY about browser navigation and reading — report each
@@ -37,7 +48,8 @@ Before each step print a short pt-BR status line:
 SIFT_STATUS <e.g. "Enviando: Java Engineer @ Acme", "Candidatura enviada">
 
 # When done with all applications
-Print exactly: SIFT_DONE
+First CLOSE the browser tab you were working in (call mcp__claude-in-chrome__tabs_close_mcp for
+that tabId) so tabs do not accumulate across runs, THEN print exactly: SIFT_DONE
 
 # Rules
 - NEVER invent information.
