@@ -9,7 +9,7 @@
 //! the marker lines the agent prints.
 
 use std::io::{BufRead, BufReader};
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 
@@ -121,7 +121,37 @@ pub fn process_line_with(
         apply_event(&conn, &event).ok()?
     };
     emit("agent://event", format!("{outcome:?}"));
+    // Also surface the milestone in the activity feed. The feed is otherwise fed
+    // only by voluntary `SIFT_STATUS` narration from the model, which is sparse
+    // and inconsistent; these deterministic lifecycle lines make it reliable.
+    if let Some(msg) = feed_message(&event, &outcome) {
+        emit("agent://status", msg);
+    }
     Some(outcome)
+}
+
+/// Human-readable activity-feed line for a persisted lifecycle event, or `None`
+/// for outcomes that shouldn't surface in the feed.
+fn feed_message(event: &super::protocol::AgentEvent, outcome: &EventOutcome) -> Option<String> {
+    use super::protocol::AgentEvent as E;
+    let msg = match (event, outcome) {
+        (E::Job(j), EventOutcome::Queued) => {
+            format!("Vaga adicionada para revisão: {} — {}", j.title, j.company)
+        }
+        (E::Job(j), EventOutcome::Recorded) => {
+            format!("Vaga encontrada: {} — {}", j.title, j.company)
+        }
+        // A re-reported vacancy is not a fresh find — stay silent in the feed.
+        (E::Job(_), EventOutcome::Duplicate) => return None,
+        (E::Pending(p), EventOutcome::Pending) => {
+            format!("Pendência registrada: {}", p.description)
+        }
+        (_, EventOutcome::LoginRequired) => "Login no LinkedIn necessário.".to_string(),
+        (_, EventOutcome::Submitted) => "Candidatura enviada.".to_string(),
+        (_, EventOutcome::Done) => "Busca concluída.".to_string(),
+        _ => return None,
+    };
+    Some(msg)
 }
 
 /// True when this outcome means the run is finished.
@@ -158,7 +188,7 @@ fn spawn_agent(
     app: tauri::AppHandle,
     prompt: String,
 ) -> Result<AgentHandle, String> {
-    let mut cmd = Command::new("claude");
+    let mut cmd = crate::claude_cli::command();
     // `-p` with no prompt argument: the prompt is piped through stdin below.
     // As an argv value it would hit the ~32 KB command-line limit on Windows
     // once the CV and answer bank grow, and it would show up in process lists.
@@ -177,17 +207,6 @@ fn spawn_agent(
     cmd.stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
-
-    // On Windows `claude` resolves to a `.cmd`/`.ps1` shim, which spawns a
-    // console host. Launched from the GUI .exe (no console of its own) that
-    // pops a blank PowerShell/conhost window for each run. CREATE_NO_WINDOW
-    // suppresses it without affecting the piped stdout/stderr we read.
-    #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt;
-        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-        cmd.creation_flags(CREATE_NO_WINDOW);
-    }
 
     let mut child = cmd
         .spawn()
@@ -333,8 +352,22 @@ mod tests {
         let outcome = process_line_with(line, &db, |ev, p| emitted.push((ev.to_string(), p)));
         assert_eq!(outcome, Some(EventOutcome::Queued));
         assert_eq!(applications::list(&db.lock().unwrap()).unwrap().len(), 1);
-        assert_eq!(emitted.len(), 1);
+        // Emits both the counts-refresh event and a human-readable feed line.
+        assert_eq!(emitted.len(), 2);
         assert_eq!(emitted[0].0, "agent://event");
+        assert_eq!(emitted[1].0, "agent://status");
+        assert!(emitted[1].1.contains("Dev") && emitted[1].1.contains("Acme"));
+    }
+
+    #[test]
+    fn process_line_feeds_terminal_milestone() {
+        let db = Mutex::new(open_in_memory());
+        let mut emitted = Vec::new();
+        let outcome =
+            process_line_with("SIFT_DONE", &db, |ev, p| emitted.push((ev.to_string(), p)));
+        assert_eq!(outcome, Some(EventOutcome::Done));
+        // A status feed line is emitted even when the model prints no SIFT_STATUS.
+        assert!(emitted.iter().any(|(ev, p)| ev == "agent://status" && p == "Busca concluída."));
     }
 
     #[test]

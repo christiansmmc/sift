@@ -7,6 +7,17 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: chore
+    groups:
+      # vite and its plugins are coupled by peer deps and must bump together.
+      vite:
+        patterns:
+          - "vite"
+          - "@vitejs/*"
+      # Collapse the routine non-breaking updates into a single PR.
+      npm-minor-patch:
+        update-types:
+          - minor
+          - patch
 
   - package-ecosystem: cargo
     directory: "/src-tauri"
@@ -15,6 +26,11 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: chore
+    groups:
+      cargo-minor-patch:
+        update-types:
+          - minor
+          - patch
 
   - package-ecosystem: github-actions
     directory: "/"
@@ -22,3 +38,7 @@ updates:
       interval: weekly
     commit-message:
       prefix: chore
+    groups:
+      github-actions:
+        patterns:
+          - "*"

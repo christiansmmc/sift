@@ -83,9 +83,8 @@ Keep it brief (under ~80 chars). Use this for status only — use JOB/PENDING/DO
   SIFT_LOGIN_REQUIRED
   and stop.
 
-- When you have processed up to {{BATCH_SIZE}} jobs (or run out of matches): first CLOSE the
-  browser tab you were working in (call mcp__claude-in-chrome__tabs_close_mcp for that tabId),
-  so tabs do not accumulate across runs, THEN print exactly SIFT_DONE and stop.
+- Your target for this run is {{BATCH_SIZE}} MATCHING jobs. Only a job you actually report with SIFT_JOB counts toward this target — postings you skip because they do not fit the criteria do NOT count. Keep going through the LinkedIn results (scroll to load more, open the next postings) and evaluate candidates until you have reported {{BATCH_SIZE}} SIFT_JOB matches. Do NOT stop merely because the first few postings you opened did not match.
+- Stop ONLY when one of these is true: (a) you have reported {{BATCH_SIZE}} SIFT_JOB matches; (b) you scrolled to the end of the relevant results and there are no more new postings to load; or (c) you have already reviewed many postings and good matches are clearly scarce. In cases (b) and (c), report whatever matches you found. When stopping, first CLOSE the browser tab you were working in (call mcp__claude-in-chrome__tabs_close_mcp for that tabId), so tabs do not accumulate across runs, THEN print exactly SIFT_DONE and stop.
 
 # Rules
 1. Only LinkedIn "Easy Apply" jobs are applied for. Anything that leaves LinkedIn → SIFT_PENDING with category external_application.

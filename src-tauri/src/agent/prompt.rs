@@ -6,18 +6,22 @@ const SUBMIT_TEMPLATE: &str = include_str!("submit_prompt.md");
 fn mode_instructions(mode: &str, batch_size: u32) -> String {
     match mode {
         "scan" => format!(
-            "MODE: SCAN. Quickly DISCOVER up to {batch_size} jobs that match the criteria. \
+            "MODE: SCAN. Your goal is to DISCOVER and report {batch_size} jobs that match the criteria. \
 Harvest as many candidates as possible from a single read of the search-results page \
 (one get_page_text of the list) instead of opening each job page; only open a job page \
 when the listing lacks enough information to judge fit. \
 For each good match, report SIFT_JOB with title, company, url, and match_summary ONLY. \
 Do NOT open Easy Apply, do NOT write a cover letter, do NOT answer screening questions. \
-Leave cover_letter as \"\" and answers as []. This is a fast discovery pass."
+Leave cover_letter as \"\" and answers as []. Keep browsing and evaluating more postings until you \
+have reported {batch_size} matches — a posting you skip because it does not fit does NOT count \
+toward the {batch_size}. This is a fast discovery pass."
         ),
         _ => format!(
-            "MODE: REVISAR. For up to {batch_size} good Easy-Apply matches, open the application, \
-read the screening questions, prepare a tailored cover letter and the answers, and report \
-SIFT_JOB with cover_letter and answers filled in. Do NOT submit — the user reviews first."
+            "MODE: REVISAR. Your goal is to report {batch_size} good Easy-Apply matches. For each good \
+match, open the application, read the screening questions, prepare a tailored cover letter and the \
+answers, and report SIFT_JOB with cover_letter and answers filled in. Keep browsing and evaluating \
+more postings until you reach {batch_size} reported matches — a posting you skip because it does not \
+fit does NOT count toward the {batch_size}. Do NOT submit — the user reviews first."
         ),
     }
 }
@@ -145,6 +149,11 @@ mod tests {
         let cl = cover_letter_instruction("balanced", "");
         let out = build_system_prompt(&p, &answers, &cl, "revisar", 10);
         assert!(out.contains("MODE: REVISAR"));
+        // The batch counts REPORTED matches, not evaluated candidates: skips must
+        // not count, and the stop condition must be framed around matches.
+        assert!(out.contains("does NOT count"));
+        assert!(!out.contains("{{BATCH_SIZE}}"));
+        assert!(out.contains("MATCHING jobs"));
         assert!(out.contains("Ada"));
         assert!(out.contains("8 years backend"));
         assert!(out.contains(r#"{"role":"backend"}"#));

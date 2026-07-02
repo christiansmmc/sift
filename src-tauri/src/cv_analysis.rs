@@ -41,12 +41,53 @@ CV:\n---\n{cv_text}\n---"
 }
 
 /// Extract the first top-level JSON object from arbitrary CLI stdout.
+///
+/// Scans for a brace-balanced object (respecting string literals and escapes)
+/// starting at each `{`, and returns the first one that deserializes. This is
+/// more robust than a naive first-`{`-to-last-`}` slice, which breaks on any
+/// stray brace in surrounding prose. Degrades to an empty result on failure.
 pub fn parse_response(stdout: &str) -> CvAnalysis {
-    let (start, end) = match (stdout.find('{'), stdout.rfind('}')) {
-        (Some(s), Some(e)) if e > s => (s, e),
-        _ => return CvAnalysis::default(),
-    };
-    serde_json::from_str::<CvAnalysis>(&stdout[start..=end]).unwrap_or_default()
+    let bytes = stdout.as_bytes();
+    for (start, _) in stdout.match_indices('{') {
+        if let Some(end) = balanced_object_end(bytes, start) {
+            if let Ok(a) = serde_json::from_str::<CvAnalysis>(&stdout[start..=end]) {
+                return a;
+            }
+        }
+    }
+    CvAnalysis::default()
+}
+
+/// Given `bytes[start] == b'{'`, return the index of the matching `}`, tracking
+/// nesting depth while skipping braces inside JSON string literals. Returns
+/// `None` if the object never closes.
+fn balanced_object_end(bytes: &[u8], start: usize) -> Option<usize> {
+    let mut depth = 0usize;
+    let mut in_string = false;
+    let mut escaped = false;
+    for (i, &b) in bytes.iter().enumerate().skip(start) {
+        if in_string {
+            match b {
+                _ if escaped => escaped = false,
+                b'\\' => escaped = true,
+                b'"' => in_string = false,
+                _ => {}
+            }
+            continue;
+        }
+        match b {
+            b'"' => in_string = true,
+            b'{' => depth += 1,
+            b'}' => {
+                depth -= 1;
+                if depth == 0 {
+                    return Some(i);
+                }
+            }
+            _ => {}
+        }
+    }
+    None
 }
 
 /// Flags for the one-shot CV analysis invocation (everything after `-p`).
@@ -72,7 +113,8 @@ pub fn analyze(cv_text: &str, model: &str) -> CvAnalysis {
         return CvAnalysis::default();
     }
     let prompt = build_prompt(cv_text);
-    let mut cmd = std::process::Command::new("claude");
+    // Shared helper applies the Windows console-window suppression.
+    let mut cmd = crate::claude_cli::command();
     // `-p` with no prompt argument: the prompt (which embeds the whole CV) is
     // piped through stdin to stay clear of the ~32 KB argv limit on Windows.
     cmd.arg("-p");
@@ -85,14 +127,6 @@ pub fn analyze(cv_text: &str, model: &str) -> CvAnalysis {
     cmd.stdin(std::process::Stdio::piped())
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::null());
-    // Suppress the blank console window the `claude` shim would otherwise pop
-    // on Windows when launched from the GUI .exe. See agent::runner::spawn_agent.
-    #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt;
-        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-        cmd.creation_flags(CREATE_NO_WINDOW);
-    }
     let mut child = match cmd.spawn() {
         Ok(c) => c,
         Err(_) => return CvAnalysis::default(),
@@ -151,5 +185,15 @@ mod tests {
     fn parse_response_returns_default_on_garbage() {
         assert_eq!(parse_response("no json here"), CvAnalysis::default());
         assert_eq!(parse_response("{not valid json}"), CvAnalysis::default());
+    }
+
+    #[test]
+    fn parse_response_ignores_trailing_braces_in_prose() {
+        // A naive first-`{`-to-last-`}` slice would swallow the trailing `{ok}`
+        // and fail to parse; brace-matching stops at the object's real close.
+        let out = "Here you go: {\"personal\":{\"full_name\":\"Ada\",\"email\":\"\",\"phone\":\"\",\"location\":\"\"},\"criteria\":{\"role\":\"Dev\",\"seniority\":\"\",\"work_model\":\"\",\"locations\":[],\"salary_min\":null,\"red_lines\":[]}} — done {ok}";
+        let a = parse_response(out);
+        assert_eq!(a.personal.full_name, "Ada");
+        assert_eq!(a.criteria.role, "Dev");
     }
 }
