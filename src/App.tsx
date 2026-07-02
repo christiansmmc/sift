@@ -43,9 +43,14 @@ export default function App() {
   }, []);
 
   async function refreshDashboard() {
-    setCounts(await api.dashboardCounts());
-    setRunning(await api.agentRunning());
-    setApprovedCount(await api.countApproved());
+    const [counts, running, approved] = await Promise.all([
+      api.dashboardCounts(),
+      api.agentRunning(),
+      api.countApproved(),
+    ]);
+    setCounts(counts);
+    setRunning(running);
+    setApprovedCount(approved);
   }
 
   // Subscribe once (after onboarding) for the app's lifetime.

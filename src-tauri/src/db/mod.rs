@@ -6,6 +6,11 @@ const SCHEMA: &str = include_str!("schema.sql");
 fn configure(conn: &Connection) -> rusqlite::Result<()> {
     conn.pragma_update(None, "foreign_keys", true)?;
     conn.busy_timeout(std::time::Duration::from_secs(5))?;
+    // WAL lets the agent sink write while the UI reads. The pragma returns the
+    // resulting mode (query_row, not pragma_update); in-memory DBs report
+    // "memory" and file DBs "wal" — both fine.
+    let _mode: String = conn.query_row("PRAGMA journal_mode=WAL", [], |r| r.get(0))?;
+    conn.pragma_update(None, "synchronous", "NORMAL")?;
     Ok(())
 }
 
@@ -119,6 +124,25 @@ mod tests {
             .query_row("SELECT COUNT(*) FROM answers", [], |r| r.get(0))
             .unwrap();
         assert_eq!(answers_count, 0);
+    }
+
+    #[test]
+    fn open_at_enables_wal_journal_mode() {
+        let path = std::env::temp_dir().join(format!("sift-wal-test-{}.db", std::process::id()));
+        let _ = std::fs::remove_file(&path);
+        let conn = open_at(&path).expect("open db at temp path");
+        let mode: String = conn
+            .query_row("PRAGMA journal_mode", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(mode.to_lowercase(), "wal");
+        drop(conn);
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(std::env::temp_dir().join(format!(
+                "sift-wal-test-{}.db{}",
+                std::process::id(),
+                suffix
+            )));
+        }
     }
 
     #[test]

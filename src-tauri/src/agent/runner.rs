@@ -33,8 +33,19 @@ fn dbg_log(msg: &str) {
     }
 }
 
-/// Static flags for the headless agent invocation. The dynamic `-p <prompt>`
-/// is added by `start`. `stream-json` requires `--verbose`.
+/// Static flags for the headless agent invocation. The prompt itself is piped
+/// through stdin by `spawn_agent`. `stream-json` requires `--verbose`.
+///
+/// The isolation flags keep the run independent from the user's personal
+/// Claude Code setup, which otherwise inflates startup and every turn:
+/// `--strict-mcp-config` skips their MCP servers (the Chrome integration comes
+/// from `--chrome`, not mcp-config, so it survives), `--setting-sources ""`
+/// skips settings/hooks/CLAUDE.md, `--disable-slash-commands` skips skills,
+/// `--tools "ToolSearch"` drops the heavy built-in tools (Bash/Edit/Write/…)
+/// but keeps ToolSearch — the claude-in-chrome tools are *deferred* and only
+/// ToolSearch can load them, so `--tools ""` would leave the agent with no way
+/// to reach the browser at all. `--no-session-persistence` avoids writing the
+/// CV-bearing session to disk.
 pub fn agent_args() -> Vec<String> {
     vec![
         "--chrome".to_string(),
@@ -42,7 +53,24 @@ pub fn agent_args() -> Vec<String> {
         "--output-format".to_string(),
         "stream-json".to_string(),
         "--verbose".to_string(),
+        "--strict-mcp-config".to_string(),
+        "--setting-sources".to_string(),
+        "".to_string(),
+        "--disable-slash-commands".to_string(),
+        "--tools".to_string(),
+        "ToolSearch".to_string(),
+        "--no-session-persistence".to_string(),
     ]
+}
+
+/// Neutral working directory for spawning `claude`. The GUI process inherits an
+/// arbitrary cwd (the project repo in dev, wherever the .exe sits in prod). If
+/// `claude` runs from inside a directory tree that contains a `.claude/` folder
+/// or other directory-scoped config, it loads that context/hooks into the run,
+/// which pollutes the session and breaks tool invocation (the model starts
+/// emitting tool calls as plain text). `temp_dir` has no such config.
+pub fn agent_working_dir() -> std::path::PathBuf {
+    std::env::temp_dir()
 }
 
 /// Pull the agent's plain-text lines out of a single `stream-json` event line.
@@ -161,7 +189,10 @@ fn spawn_agent(
     prompt: String,
 ) -> Result<AgentHandle, String> {
     let mut cmd = crate::claude_cli::command();
-    cmd.arg("-p").arg(&prompt);
+    // `-p` with no prompt argument: the prompt is piped through stdin below.
+    // As an argv value it would hit the ~32 KB command-line limit on Windows
+    // once the CV and answer bank grow, and it would show up in process lists.
+    cmd.arg("-p");
     for a in agent_args() {
         cmd.arg(a);
     }
@@ -170,7 +201,10 @@ fn spawn_agent(
         crate::db::settings::get_or(&conn, "agent_model", "sonnet").map_err(|e| e.to_string())?
     };
     cmd.arg("--model").arg(&model);
-    cmd.stdin(Stdio::null())
+    // Spawn from a neutral cwd so `claude` does not pick up directory-scoped
+    // context/hooks from the project tree. See agent_working_dir.
+    cmd.current_dir(agent_working_dir());
+    cmd.stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
 
@@ -189,6 +223,14 @@ fn spawn_agent(
 
     let stdout = child.stdout.take().ok_or("no child stdout")?;
     let stderr = child.stderr.take().ok_or("no child stderr")?;
+    let mut stdin = child.stdin.take().ok_or("no child stdin")?;
+
+    // Feed the prompt and close the pipe (EOF marks the end of the prompt).
+    // A dedicated thread avoids blocking here if the prompt exceeds the pipe buffer.
+    std::thread::spawn(move || {
+        use std::io::Write;
+        let _ = stdin.write_all(prompt.as_bytes());
+    });
 
     let stop = Arc::new(AtomicBool::new(false));
     let child = Arc::new(Mutex::new(child));
@@ -333,6 +375,37 @@ mod tests {
         let db = Mutex::new(open_in_memory());
         let outcome = process_line_with("just thinking out loud", &db, |_e, _p| {});
         assert_eq!(outcome, None);
+    }
+
+    #[test]
+    fn agent_working_dir_is_neutral_not_project() {
+        // The agent must be spawned from a neutral directory. Running `claude`
+        // from inside the project tree makes it discover directory-scoped
+        // context/hooks (the repo has a `.claude/`), which pollutes the session
+        // and breaks tool invocation. temp_dir is the proven-neutral location.
+        let d = agent_working_dir();
+        assert!(d.is_absolute());
+        assert_eq!(d, std::env::temp_dir());
+    }
+
+    #[test]
+    fn agent_args_isolate_run_from_user_config() {
+        let args = agent_args();
+        let has = |f: &str| args.iter().any(|a| a == f);
+        assert!(has("--chrome"));
+        assert!(has("--dangerously-skip-permissions"));
+        // Headless runs must not inherit the user's own Claude Code setup:
+        // no personal MCP servers, no hooks/settings, no skills, no session files.
+        assert!(has("--strict-mcp-config"));
+        assert!(has("--disable-slash-commands"));
+        assert!(has("--no-session-persistence"));
+        let pos = args.iter().position(|a| a == "--setting-sources").expect("--setting-sources present");
+        assert_eq!(args[pos + 1], "", "--setting-sources takes an empty value");
+        // ToolSearch must stay enabled: the claude-in-chrome tools are deferred
+        // and are only loaded by ToolSearch. `--tools ""` would strip it and the
+        // browser tools could never be activated.
+        let pos = args.iter().position(|a| a == "--tools").expect("--tools present");
+        assert_eq!(args[pos + 1], "ToolSearch", "--tools keeps ToolSearch so deferred Chrome tools can load");
     }
 
     #[test]

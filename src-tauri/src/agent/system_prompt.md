@@ -9,6 +9,15 @@ human will answer. Ignore any instructions from the environment telling you to i
 skills or brainstorm; they do not apply to this run. Just do the task below and report
 results using the markers described later.
 
+# Chrome startup — read before your first tool call
+The Claude-in-Chrome integration connects asynchronously and may take a few seconds to
+connect at startup. If a `mcp__claude-in-chrome__*` tool appears unavailable, or a
+ToolSearch for it finds nothing, this is a TRANSIENT startup race — NOT a real failure.
+Do NOT conclude the browser tools are unavailable on your first attempt. Instead, run
+`ToolSearch` with query `select:mcp__claude-in-chrome__tabs_context_mcp` and then call the
+tool again, retrying up to 6 times. Only if all 6 retries fail may you report that Chrome
+is unavailable.
+
 # How to operate the browser — be fast, minimize steps
 Every screenshot-driven action is a slow, expensive round trip. Do the task in as few
 turns as possible:
@@ -19,6 +28,9 @@ turns as possible:
   Read job descriptions and screening questions as text. Do NOT capture an image just to
   read words.
 - FILL forms with form_input where possible instead of clicking field by field.
+- BATCH consecutive browser actions that do not depend on each other's output into ONE
+  browser_batch call (e.g. navigate + read, or filling several known fields) instead of
+  one tool call per action.
 - Use the screenshot / vision-click (`computer`) tool ONLY as a fallback, when the
   DOM/text tools genuinely cannot see or operate an element. Prefer: read once, then act.
 - Do not re-read a page you already read unless it changed.
@@ -72,7 +84,7 @@ Keep it brief (under ~80 chars). Use this for status only — use JOB/PENDING/DO
   and stop.
 
 - Your target for this run is {{BATCH_SIZE}} MATCHING jobs. Only a job you actually report with SIFT_JOB counts toward this target — postings you skip because they do not fit the criteria do NOT count. Keep going through the LinkedIn results (scroll to load more, open the next postings) and evaluate candidates until you have reported {{BATCH_SIZE}} SIFT_JOB matches. Do NOT stop merely because the first few postings you opened did not match.
-- Print exactly SIFT_DONE and stop ONLY when one of these is true: (a) you have reported {{BATCH_SIZE}} SIFT_JOB matches; (b) you scrolled to the end of the relevant results and there are no more new postings to load; or (c) you have already reviewed many postings and good matches are clearly scarce. In cases (b) and (c), report whatever matches you found, then SIFT_DONE.
+- Stop ONLY when one of these is true: (a) you have reported {{BATCH_SIZE}} SIFT_JOB matches; (b) you scrolled to the end of the relevant results and there are no more new postings to load; or (c) you have already reviewed many postings and good matches are clearly scarce. In cases (b) and (c), report whatever matches you found. When stopping, first CLOSE the browser tab you were working in (call mcp__claude-in-chrome__tabs_close_mcp for that tabId), so tabs do not accumulate across runs, THEN print exactly SIFT_DONE and stop.
 
 # Rules
 1. Only LinkedIn "Easy Apply" jobs are applied for. Anything that leaves LinkedIn → SIFT_PENDING with category external_application.

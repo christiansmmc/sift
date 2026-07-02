@@ -90,15 +90,54 @@ fn balanced_object_end(bytes: &[u8], start: usize) -> Option<usize> {
     None
 }
 
+/// Flags for the one-shot CV analysis invocation (everything after `-p`).
+/// This is a pure text-extraction call: it needs no tools, no MCP servers, no
+/// hooks/skills from the user's own Claude Code setup, and no session file on
+/// disk — skipping all of that cuts startup from many seconds to a few.
+pub fn cv_args(model: &str) -> Vec<String> {
+    vec![
+        "--model".to_string(),
+        model.to_string(),
+        "--strict-mcp-config".to_string(),
+        "--setting-sources".to_string(),
+        "".to_string(),
+        "--disable-slash-commands".to_string(),
+        "--tools".to_string(),
+        "".to_string(),
+        "--no-session-persistence".to_string(),
+    ]
+}
+
 pub fn analyze(cv_text: &str, model: &str) -> CvAnalysis {
     if cv_text.trim().is_empty() {
         return CvAnalysis::default();
     }
     let prompt = build_prompt(cv_text);
+    // Shared helper applies the Windows console-window suppression.
     let mut cmd = crate::claude_cli::command();
-    cmd.arg("-p").arg(&prompt).arg("--model").arg(model);
-    let output = cmd.output();
-    match output {
+    // `-p` with no prompt argument: the prompt (which embeds the whole CV) is
+    // piped through stdin to stay clear of the ~32 KB argv limit on Windows.
+    cmd.arg("-p");
+    for a in cv_args(model) {
+        cmd.arg(a);
+    }
+    // Spawn from a neutral cwd so `claude` does not load directory-scoped
+    // context/hooks from the project tree. See agent::runner::agent_working_dir.
+    cmd.current_dir(crate::agent::runner::agent_working_dir());
+    cmd.stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::null());
+    let mut child = match cmd.spawn() {
+        Ok(c) => c,
+        Err(_) => return CvAnalysis::default(),
+    };
+    if let Some(mut stdin) = child.stdin.take() {
+        use std::io::Write;
+        // The CLI reads all of stdin before producing output, so writing the
+        // whole prompt here (then closing the pipe) cannot deadlock.
+        let _ = stdin.write_all(prompt.as_bytes());
+    }
+    match child.wait_with_output() {
         Ok(o) if o.status.success() => parse_response(&String::from_utf8_lossy(&o.stdout)),
         _ => CvAnalysis::default(),
     }
@@ -125,6 +164,21 @@ mod tests {
         assert_eq!(a.criteria.role, "Backend Engineer");
         assert_eq!(a.criteria.work_model, "remote");
         assert_eq!(a.criteria.salary_min, Some(12000));
+    }
+
+    #[test]
+    fn cv_args_isolate_run_from_user_config() {
+        let args = cv_args("haiku");
+        let has = |f: &str| args.iter().any(|a| a == f);
+        assert!(has("--strict-mcp-config"));
+        assert!(has("--disable-slash-commands"));
+        assert!(has("--no-session-persistence"));
+        let pos = args.iter().position(|a| a == "--setting-sources").expect("--setting-sources present");
+        assert_eq!(args[pos + 1], "");
+        let pos = args.iter().position(|a| a == "--tools").expect("--tools present");
+        assert_eq!(args[pos + 1], "");
+        let pos = args.iter().position(|a| a == "--model").expect("--model present");
+        assert_eq!(args[pos + 1], "haiku");
     }
 
     #[test]
